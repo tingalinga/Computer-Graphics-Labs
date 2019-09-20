@@ -2,6 +2,8 @@
 
 This is my repository for the programs I develop at the course in Computer Graphics. The code is written in C++ and uses OpenGL and Glut.
 
+This is an example of one of the programs: 
+
 
 Given that source file is `main.cpp`, this is how the files should be compiled and run on macOS:
 
