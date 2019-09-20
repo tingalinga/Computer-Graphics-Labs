@@ -1,2 +1,15 @@
-.pdf
-.zip
+# Assignment related
+*.pdf
+*.zip
+*.exe
+*-ori.cpp
+
+# Library files
+*.dll
+*.lib
+include/
+lib/
+
+# Compiled source code
+main
+
