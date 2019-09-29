@@ -2,7 +2,8 @@
 
 This is my repository for the programs I develop at the course in Computer Graphics. The code is written in C++ and uses OpenGL and Glut.
 
-This is an example of one of the programs (lab2): 
+This is an example of one of the programs (lab2):
+
 ![Lab2](https://media.giphy.com/media/Sw5rbrZ4MMRzsurBEX/giphy.gif)
 
 
