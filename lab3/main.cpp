@@ -3,8 +3,9 @@
 // STUDENT NO.: A0207552J
 // NUS EMAIL ADDRESS: e0445646@u.nus.edu
 // COMMENTS TO GRADER: This program has been developed and tested on macOS
-// and compiled with: "gcc main.cpp -o main -framework GLUT -framework OpenGL
-// -Wall -Wextra -Wno-deprecated"
+// and compiled with:
+// g++ -I./include/ -Wno-deprecated -c image_io.cpp
+// g++ -lGLEW -framework GLUT -framework OpenGL -Wno-deprecated -o main main.cpp image_io.o
 // There may therefore be problems with library functions, although
 // I believe there shouldn't.
 // ============================================================
