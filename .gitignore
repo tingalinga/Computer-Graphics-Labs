@@ -3,6 +3,7 @@
 *.zip
 *.exe
 *-ori.cpp
+*.o
 
 # Library files
 *.dll
