@@ -44,8 +44,10 @@
 #define TABLETOP_Y1 -1.5
 #define TABLETOP_Y2 1.5
 #define TABLETOP_Z 1.2  // This is the z coordinate of the top-most face of the table.
-
 #define TABLE_THICKNESS 0.1
+
+#define OBJ_CENTER_X 0.75
+#define OBJ_CENTER_Y -0.5
 
 // The followings are for navigation and setting the view of the (actual) eye.
 
@@ -69,6 +71,10 @@
     (void) (expr);   \
   } while (0)
 #define UNUNSED_VAR 0
+
+// Trig functions that takes degrees instead of radians as argument
+#define sinDeg(x) sin((x) *PI / 180.0)
+#define cosDeg(x) cos((x) *PI / 180.0)
 
 // Light 0.
 const GLfloat light0Ambient[] = {0.1, 0.1, 0.1, 1.0};
@@ -130,6 +136,7 @@ void DrawRoom(void);
 void DrawTeapot(void);
 void DrawSphere(void);
 void DrawTable(void);
+void DrawMiniTable(void);
 
 // Render the scene from the imaginary viewpoint and capture the image as
 // a texture map.
@@ -152,20 +159,53 @@ void MakeReflectionImage(void) {
   //****************************
   // WRITE YOUR CODE HERE.
   //****************************
+
+  // Step 1: Clear the buffers
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  // Step 2 and 3: Set up the imaginary viewpoint and it's view volume
+  double IVP_Z = 2 * TABLETOP_Z - eyePos[2];  // Account for the table width
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glFrustum(TABLETOP_Y1 - eyePos[1], TABLETOP_Y2 - eyePos[1],     // Left, right
+            TABLETOP_X1 - eyePos[0], TABLETOP_X2 - eyePos[0],     // Bottom, top
+            eyePos[2] - TABLETOP_Z, eyeDistance + SCENE_RADIUS);  // Near, far
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  gluLookAt(eyePos[0], eyePos[1], IVP_Z,      // Eye position
+            eyePos[0], eyePos[1], eyePos[2],  // Look at
+            1.0, 0.0, 0.0);                   // Up vector
+
+  // Step 4: Set world-space positions of the two lights.
+  glLightfv(GL_LIGHT0, GL_POSITION, light0Position);
+  glLightfv(GL_LIGHT1, GL_POSITION, light1Position);
+
+  // Step 5: Draw room/relevant objects
+  DrawRoom();
+  DrawTeapot();
+  DrawSphere();
+
+  // Step 6: Save texture
+  glReadBuffer(GL_BACK);
+  glBindTexture(GL_TEXTURE_2D, reflectionTexObj);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+
+  glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, winWidth, winHeight, 0);
 }
 
 // The display callback function.
 void MyDisplay(void) {
-  if (hasTexture)
-    glEnable(GL_TEXTURE_2D);
-  else
-    glDisable(GL_TEXTURE_2D);
+  hasTexture ? glEnable(GL_TEXTURE_2D) : glDisable(GL_TEXTURE_2D);
 
   // Compute world-space eye position from eyeLatitude, eyeLongitude, eyeDistance, and look-at point.
-  eyePos[2] = eyeDistance * sin(eyeLatitude * PI / 180.0) + LOOKAT_Z;
-  double xy = eyeDistance * cos(eyeLatitude * PI / 180.0);
-  eyePos[0] = xy * cos(eyeLongitude * PI / 180.0) + LOOKAT_X;
-  eyePos[1] = xy * sin(eyeLongitude * PI / 180.0) + LOOKAT_Y;
+  double xy = eyeDistance * cosDeg(eyeLatitude);
+  eyePos[0] = xy * cosDeg(eyeLongitude) + LOOKAT_X;
+  eyePos[1] = xy * sinDeg(eyeLongitude) + LOOKAT_Y;
+  eyePos[2] = eyeDistance * sinDeg(eyeLatitude) + LOOKAT_Z;
 
   MakeReflectionImage();
 
@@ -364,7 +404,6 @@ void setUpTextureMap(GLuint* texObjp, const char* texFilename) {
   DeallocateImageData(&imageData);
 }
 
-
 // Set up texture maps
 void SetUpTextureMaps(void) {
   // unsigned char* imageData = NULL;
@@ -372,24 +411,11 @@ void SetUpTextureMaps(void) {
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  GLuint* texObjs[5] = {&woodTexObj, &ceilingTexObj, &brickTexObj, &checkerTexObj, &spotsTexObj};
+  GLuint* texObjsp[5] = {&woodTexObj, &ceilingTexObj, &brickTexObj, &checkerTexObj, &spotsTexObj};
   const char* texFiles[5] = {woodTexFile, ceilingTexFile, brickTexFile, checkerTexFile, spotsTexFile};
   for (int i = 0; i < 5; i++) {
-    setUpTextureMap(texObjs[i], texFiles[i]);
+    setUpTextureMap(texObjsp[i], texFiles[i]);
   }
-  // // This texture object is for the wood texture map.
-  // setUpTextureMap(&woodTexObj, woodTexFile);
-  // // This texture object is for the ceiling texture map.
-  // setUpTextureMap(&ceilingTexObj, ceilingTexFile);
-  // // This texture object is for the brick texture map.
-  // setUpTextureMap(&brickTexObj, brickTexFile);
-  // // This texture object is for the checkered texture map.
-  // setUpTextureMap(&checkerTexObj, checkerTexFile);
-  // // This texture object is for the spots texture map.
-  // setUpTextureMap(&spotsTexObj, spotsTexFile);
-
-
-  // This texture object is for storing the reflection image read from the color buffer.
 
   //********************************************************
   //*********** TASK #1: WRITE YOUR CODE BELOW *************
@@ -404,6 +430,9 @@ void SetUpTextureMaps(void) {
   //****************************
   // WRITE YOUR CODE HERE.
   //****************************
+
+  // This texture object is for storing the reflection image read from the color buffer.
+  glGenTextures(1, &reflectionTexObj);
 }
 
 // The main function.
@@ -415,8 +444,7 @@ int main(int argc, char** argv) {
   glutInitWindowSize(winWidth, winHeight);
   glutCreateWindow("main");
 
-  // Register the callback functions.
-
+  // Register the callback functions
   glutDisplayFunc(MyDisplay);
   glutReshapeFunc(MyReshape);
   glutKeyboardFunc(MyKeyboard);
@@ -424,7 +452,6 @@ int main(int argc, char** argv) {
 
   // Initialize GLEW.
   // The followings make sure OpenGL 1.4 is supported and set up the extensions.
-
   GLenum err = glewInit();
   if (err != GLEW_OK) {
     fprintf(stderr, "Error: %s.\n", glewGetErrorString(err));
@@ -438,12 +465,10 @@ int main(int argc, char** argv) {
   }
 
   // Setup the initial render context.
-
   GLInit();
   SetUpTextureMaps();
 
   // Display user instructions in console window.
-
   printf("Press LEFT to move eye left.\n");
   printf("Press RIGHT to move eye right.\n");
   printf("Press UP to move eye up.\n");
@@ -457,22 +482,16 @@ int main(int argc, char** argv) {
   printf("Press 'Q' to quit.\n\n");
 
   // Enter GLUT event loop.
-
   glutMainLoop();
   return 0;
 }
 
 //============================================================================
-//============================================================================
 // Functions below are for modeling the 3D objects.
 //============================================================================
-//============================================================================
 
-/////////////////////////////////////////////////////////////////////////////
 // Draw the x, y, z axes. Each is drawn with the input length.
 // The x-axis is red, y-axis green, and z-axis blue.
-/////////////////////////////////////////////////////////////////////////////
-
 void DrawAxes(double length) {
   glPushAttrib(GL_ALL_ATTRIB_BITS);
   glDisable(GL_LIGHTING);
@@ -503,7 +522,6 @@ void DrawAxes(double length) {
 //
 // The texture coordinates at the input vertices are bilinearly
 // interpolated to the newly created vertices.
-
 void SubdivideAndDrawQuad(int uSteps, int vSteps,
                           float s0, float t0, float x0, float y0, float z0,
                           float s1, float t1, float x1, float y1, float z1,
@@ -575,8 +593,7 @@ void DrawRoom(void) {
 
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-  // Ceiling.
-
+  // Ceiling
   GLfloat matAmbient1[] = {0.6, 0.6, 0.6, 1.0};
   GLfloat matDiffuse1[] = {0.6, 0.6, 0.6, 1.0};
   GLfloat matSpecular1[] = {0.2, 0.2, 0.2, 1.0};
@@ -593,37 +610,35 @@ void DrawRoom(void) {
                        ROOM_WIDTH, ROOM_WIDTH, -ROOM_HALF_WIDTH, -ROOM_HALF_WIDTH, ROOM_HEIGHT,
                        0.0, ROOM_WIDTH, -ROOM_HALF_WIDTH, ROOM_HALF_WIDTH, ROOM_HEIGHT);
 
-  // Walls.
-
+  // Walls
   glBindTexture(GL_TEXTURE_2D, brickTexObj);
 
-  // In +y direction.
-  glNormal3f(0.0, -1.0, 0.0);  // Normal vector.
+  // In +y direction
+  glNormal3f(0.0, -1.0, 0.0);  // Normal vector
   SubdivideAndDrawQuad(24, 16, 0.0, 0.0, -ROOM_HALF_WIDTH, ROOM_HALF_WIDTH, 0.0,
                        ROOM_WIDTH / 2, 0.0, ROOM_HALF_WIDTH, ROOM_HALF_WIDTH, 0.0,
                        ROOM_WIDTH / 2, ROOM_HEIGHT / 2, ROOM_HALF_WIDTH, ROOM_HALF_WIDTH, ROOM_HEIGHT,
                        0.0, ROOM_HEIGHT / 2, -ROOM_HALF_WIDTH, ROOM_HALF_WIDTH, ROOM_HEIGHT);
-  // In -y direction.
-  glNormal3f(0.0, 1.0, 0.0);  // Normal vector.
+  // In -y direction
+  glNormal3f(0.0, 1.0, 0.0);  // Normal vector
   SubdivideAndDrawQuad(24, 16, 0.0, 0.0, ROOM_HALF_WIDTH, -ROOM_HALF_WIDTH, 0.0,
                        ROOM_WIDTH / 2, 0.0, -ROOM_HALF_WIDTH, -ROOM_HALF_WIDTH, 0.0,
                        ROOM_WIDTH / 2, ROOM_HEIGHT / 2, -ROOM_HALF_WIDTH, -ROOM_HALF_WIDTH, ROOM_HEIGHT,
                        0.0, ROOM_HEIGHT / 2, ROOM_HALF_WIDTH, -ROOM_HALF_WIDTH, ROOM_HEIGHT);
-  // In +x direction.
-  glNormal3f(-1.0, 0.0, 0.0);  // Normal vector.
+  // In +x direction
+  glNormal3f(-1.0, 0.0, 0.0);  // Normal vector
   SubdivideAndDrawQuad(24, 16, 0.0, 0.0, ROOM_HALF_WIDTH, ROOM_HALF_WIDTH, 0.0,
                        ROOM_WIDTH / 2, 0.0, ROOM_HALF_WIDTH, -ROOM_HALF_WIDTH, 0.0,
                        ROOM_WIDTH / 2, ROOM_HEIGHT / 2, ROOM_HALF_WIDTH, -ROOM_HALF_WIDTH, ROOM_HEIGHT,
                        0.0, ROOM_HEIGHT / 2, ROOM_HALF_WIDTH, ROOM_HALF_WIDTH, ROOM_HEIGHT);
-  // In -x direction.
-  glNormal3f(1.0, 0.0, 0.0);  // Normal vector.
+  // In -x direction
+  glNormal3f(1.0, 0.0, 0.0);  // Normal vector
   SubdivideAndDrawQuad(24, 16, 0.0, 0.0, -ROOM_HALF_WIDTH, -ROOM_HALF_WIDTH, 0.0,
                        ROOM_WIDTH / 2, 0.0, -ROOM_HALF_WIDTH, ROOM_HALF_WIDTH, 0.0,
                        ROOM_WIDTH / 2, ROOM_HEIGHT / 2, -ROOM_HALF_WIDTH, ROOM_HALF_WIDTH, ROOM_HEIGHT,
                        0.0, ROOM_HEIGHT / 2, -ROOM_HALF_WIDTH, -ROOM_HALF_WIDTH, ROOM_HEIGHT);
 
-  // Floor.
-
+  // Floor
   GLfloat matAmbient2[] = {0.5, 0.5, 0.5, 1.0};
   GLfloat matDiffuse2[] = {0.5, 0.5, 0.5, 1.0};
   GLfloat matSpecular2[] = {0.8, 0.8, 0.8, 1.0};
@@ -720,8 +735,17 @@ void DrawTable(void) {
   //****************************
   // WRITE YOUR CODE HERE.
   //****************************
+  glBindTexture(GL_TEXTURE_2D, reflectionTexObj);
+  // glColor4f(1.0, 1.0, 1.0, 0.5);
 
-  // Sides
+  glNormal3f(0.0, 0.0, 1.0);  // Normal vector.
+  SubdivideAndDrawQuad(24, 24,
+                       0.0, 1.0, TABLETOP_X2, TABLETOP_Y1, TABLETOP_Z,
+                       1.0, 1.0, TABLETOP_X2, TABLETOP_Y2, TABLETOP_Z,
+                       1.0, 0.0, TABLETOP_X1, TABLETOP_Y2, TABLETOP_Z,
+                       0.0, 0.0, TABLETOP_X1, TABLETOP_Y1, TABLETOP_Z);
+
+  // Bottom and sides
   GLfloat matAmbient2[] = {0.2, 0.3, 0.4, 1.0};
   GLfloat matDiffuse2[] = {0.2, 0.3, 0.4, 1.0};
   GLfloat matSpecular2[] = {0.6, 0.8, 1.0, 1.0};
@@ -731,39 +755,41 @@ void DrawTable(void) {
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpecular2);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, matShininess2);
 
-  glBindTexture(GL_TEXTURE_2D, 0);  // Texture object ID == 0 means no texture mapping.
+  glBindTexture(GL_TEXTURE_2D, 0);  // Texture object ID == 0 means no texture mapping
 
+  // BOTTOM
+  glNormal3f(0.0, 0.0, -1.0);  // Normal vector
+  SubdivideAndDrawQuad(24, 24,
+                       0.0, 0.0, TABLETOP_X1, TABLETOP_Y1, TABLETOP_Z - TABLE_THICKNESS,
+                       1.0, 0.0, TABLETOP_X1, TABLETOP_Y2, TABLETOP_Z - TABLE_THICKNESS,
+                       1.0, 1.0, TABLETOP_X2, TABLETOP_Y2, TABLETOP_Z - TABLE_THICKNESS,
+                       0.0, 1.0, TABLETOP_X2, TABLETOP_Y1, TABLETOP_Z - TABLE_THICKNESS);
+
+  // SIDES
   // In +y direction
-  glNormal3f(0.0, 1.0, 0.0);  // Normal vector.
+  glNormal3f(0.0, 1.0, 0.0);  // Normal vector
   SubdivideAndDrawQuad(24, 2, 0.0, 0.0, TABLETOP_X2, TABLETOP_Y2, TABLETOP_Z - TABLE_THICKNESS,
                        1.0, 0.0, TABLETOP_X1, TABLETOP_Y2, TABLETOP_Z - TABLE_THICKNESS,
                        1.0, 1.0, TABLETOP_X1, TABLETOP_Y2, TABLETOP_Z,
                        0.0, 1.0, TABLETOP_X2, TABLETOP_Y2, TABLETOP_Z);
   // In -y direction
-  glNormal3f(0.0, -1.0, 0.0);  // Normal vector.
+  glNormal3f(0.0, -1.0, 0.0);  // Normal vector
   SubdivideAndDrawQuad(24, 2, 0.0, 0.0, TABLETOP_X1, TABLETOP_Y1, TABLETOP_Z - TABLE_THICKNESS,
                        1.0, 0.0, TABLETOP_X2, TABLETOP_Y1, TABLETOP_Z - TABLE_THICKNESS,
                        1.0, 1.0, TABLETOP_X2, TABLETOP_Y1, TABLETOP_Z,
                        0.0, 1.0, TABLETOP_X1, TABLETOP_Y1, TABLETOP_Z);
   // In +x direction
-  glNormal3f(1.0, 0.0, 0.0);  // Normal vector.
+  glNormal3f(1.0, 0.0, 0.0);  // Normal vector
   SubdivideAndDrawQuad(24, 2, 0.0, 0.0, TABLETOP_X2, TABLETOP_Y1, TABLETOP_Z - TABLE_THICKNESS,
                        1.0, 0.0, TABLETOP_X2, TABLETOP_Y2, TABLETOP_Z - TABLE_THICKNESS,
                        1.0, 1.0, TABLETOP_X2, TABLETOP_Y2, TABLETOP_Z,
                        0.0, 1.0, TABLETOP_X2, TABLETOP_Y1, TABLETOP_Z);
   // In -x direction
-  glNormal3f(-1.0, 0.0, 0.0);  // Normal vector.
+  glNormal3f(-1.0, 0.0, 0.0);  // Normal vector
   SubdivideAndDrawQuad(24, 2, 0.0, 0.0, TABLETOP_X1, TABLETOP_Y2, TABLETOP_Z - TABLE_THICKNESS,
                        1.0, 0.0, TABLETOP_X1, TABLETOP_Y1, TABLETOP_Z - TABLE_THICKNESS,
                        1.0, 1.0, TABLETOP_X1, TABLETOP_Y1, TABLETOP_Z,
                        0.0, 1.0, TABLETOP_X1, TABLETOP_Y2, TABLETOP_Z);
-
-  // Bottom
-  glNormal3f(0.0, 0.0, -1.0);  // Normal vector.
-  SubdivideAndDrawQuad(24, 24, 0.0, 0.0, TABLETOP_X1, TABLETOP_Y1, TABLETOP_Z - TABLE_THICKNESS,
-                       1.0, 0.0, TABLETOP_X1, TABLETOP_Y2, TABLETOP_Z - TABLE_THICKNESS,
-                       1.0, 1.0, TABLETOP_X2, TABLETOP_Y2, TABLETOP_Z - TABLE_THICKNESS,
-                       0.0, 1.0, TABLETOP_X2, TABLETOP_Y1, TABLETOP_Z - TABLE_THICKNESS);
 
   // Legs
   GLfloat matAmbient3[] = {0.4, 0.4, 0.4, 1.0};
