@@ -340,117 +340,54 @@ void GLInit(void) {
   glEnable(GL_NORMALIZE);
 }
 
-// Set up texture maps.
-void SetUpTextureMaps(void) {
+void setUpTextureMap(GLuint* texObjp, const char* texFilename) {
   unsigned char* imageData = NULL;
   int imageWidth, imageHeight, numComponents;
 
+  glGenTextures(1, texObjp);
+  glBindTexture(GL_TEXTURE_2D, *texObjp);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+  if (ReadImageFile(texFilename, &imageData,
+                    &imageWidth, &imageHeight, &numComponents) == 0) exit(1);
+  if (numComponents != 3) {
+    fprintf(stderr, "Error: Texture image '%s' is not in RGB format.\n", texFilename);
+    exit(1);
+  }
+
+  gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, imageWidth, imageHeight,
+                    GL_RGB, GL_UNSIGNED_BYTE, imageData);
+
+  DeallocateImageData(&imageData);
+}
+
+
+// Set up texture maps
+void SetUpTextureMaps(void) {
+  // unsigned char* imageData = NULL;
+  // int imageWidth, imageHeight, numComponents;
+
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  // This texture object is for the wood texture map.
-
-  glGenTextures(1, &woodTexObj);
-  glBindTexture(GL_TEXTURE_2D, woodTexObj);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-  if (ReadImageFile(woodTexFile, &imageData,
-                    &imageWidth, &imageHeight, &numComponents) == 0) exit(1);
-  if (numComponents != 3) {
-    fprintf(stderr, "Error: Texture image is not in RGB format.\n");
-    exit(1);
+  GLuint* texObjs[5] = {&woodTexObj, &ceilingTexObj, &brickTexObj, &checkerTexObj, &spotsTexObj};
+  const char* texFiles[5] = {woodTexFile, ceilingTexFile, brickTexFile, checkerTexFile, spotsTexFile};
+  for (int i = 0; i < 5; i++) {
+    setUpTextureMap(texObjs[i], texFiles[i]);
   }
+  // // This texture object is for the wood texture map.
+  // setUpTextureMap(&woodTexObj, woodTexFile);
+  // // This texture object is for the ceiling texture map.
+  // setUpTextureMap(&ceilingTexObj, ceilingTexFile);
+  // // This texture object is for the brick texture map.
+  // setUpTextureMap(&brickTexObj, brickTexFile);
+  // // This texture object is for the checkered texture map.
+  // setUpTextureMap(&checkerTexObj, checkerTexFile);
+  // // This texture object is for the spots texture map.
+  // setUpTextureMap(&spotsTexObj, spotsTexFile);
 
-  gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, imageWidth, imageHeight,
-                    GL_RGB, GL_UNSIGNED_BYTE, imageData);
-
-  DeallocateImageData(&imageData);
-
-  // This texture object is for the ceiling texture map.
-
-  glGenTextures(1, &ceilingTexObj);
-  glBindTexture(GL_TEXTURE_2D, ceilingTexObj);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-  if (ReadImageFile(ceilingTexFile, &imageData,
-                    &imageWidth, &imageHeight, &numComponents) == 0) exit(1);
-  if (numComponents != 3) {
-    fprintf(stderr, "Error: Texture image is not in RGB format.\n");
-    exit(1);
-  }
-
-  gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, imageWidth, imageHeight,
-                    GL_RGB, GL_UNSIGNED_BYTE, imageData);
-
-  DeallocateImageData(&imageData);
-
-  // This texture object is for the brick texture map.
-
-  glGenTextures(1, &brickTexObj);
-  glBindTexture(GL_TEXTURE_2D, brickTexObj);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-  if (ReadImageFile(brickTexFile, &imageData,
-                    &imageWidth, &imageHeight, &numComponents) == 0) exit(1);
-  if (numComponents != 3) {
-    fprintf(stderr, "Error: Texture image is not in RGB format.\n");
-    exit(1);
-  }
-
-  gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, imageWidth, imageHeight,
-                    GL_RGB, GL_UNSIGNED_BYTE, imageData);
-
-  DeallocateImageData(&imageData);
-
-  // This texture object is for the checkered texture map.
-
-  glGenTextures(1, &checkerTexObj);
-  glBindTexture(GL_TEXTURE_2D, checkerTexObj);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-  if (ReadImageFile(checkerTexFile, &imageData,
-                    &imageWidth, &imageHeight, &numComponents) == 0) exit(1);
-  if (numComponents != 3) {
-    fprintf(stderr, "Error: Texture image is not in RGB format.\n");
-    exit(1);
-  }
-
-  gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, imageWidth, imageHeight,
-                    GL_RGB, GL_UNSIGNED_BYTE, imageData);
-
-  DeallocateImageData(&imageData);
-
-  // This texture object is for the spots texture map.
-
-  glGenTextures(1, &spotsTexObj);
-  glBindTexture(GL_TEXTURE_2D, spotsTexObj);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-  if (ReadImageFile(spotsTexFile, &imageData,
-                    &imageWidth, &imageHeight, &numComponents) == 0) exit(1);
-  if (numComponents != 3) {
-    fprintf(stderr, "Error: Texture image is not in RGB format.\n");
-    exit(1);
-  }
-
-  gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, imageWidth, imageHeight,
-                    GL_RGB, GL_UNSIGNED_BYTE, imageData);
-
-  DeallocateImageData(&imageData);
 
   // This texture object is for storing the reflection image read from the color buffer.
 
