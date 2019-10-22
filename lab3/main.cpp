@@ -49,6 +49,7 @@
 #define OBJ_CENTER_X 0.75
 #define OBJ_CENTER_Y -0.5
 
+#define WING_THICKNESS 0.05
 // The followings are for navigation and setting the view of the (actual) eye.
 
 #define LOOKAT_X 0.0  // Look-at point x coordinate.
@@ -63,6 +64,11 @@
 #define EYE_MAX_LATITUDE 88.0   // Max eye's latitude (in degrees) w.r.t. look-at point.
 #define EYE_LATITUDE_INCR 2.0   // Degree increment when changing eye's latitude.
 #define EYE_LONGITUDE_INCR 2.0  // Degree increment when changing eye's longitude.
+
+#define MAX_WING_ANGLE 50.0
+
+#define DESIRED_FPS 30  // Approximate desired number of frames per second.
+#define MS_BETWEEN_FRAMES (unsigned int) 1000 / DESIRED_FPS
 
 // A simple expression for silencing compiler warnings for
 // unused parameters without altering program flow
@@ -94,10 +100,24 @@ const char ceilingTexFile[] = "images/ceiling.jpg";
 const char brickTexFile[] = "images/brick.jpg";
 const char checkerTexFile[] = "images/checker.png";
 const char spotsTexFile[] = "images/spots.png";
+const char featherTexFile[] = "images/feather.jpg";
+const char birdfaceTexFile[] = "images/birdface.jpg";
 
 /////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
 /////////////////////////////////////////////////////////////////////////////
+
+typedef struct Bird {
+  double pos[3];           // World-position of bird
+  double wingSwingFactor;  // Factor with which wings swing
+  double wingSwing;        // Current wing swing value
+  double wingAngle;        // Angle to be computed and stored from wingSwing
+} Bird;
+
+Bird bird = {{0.4, -0.4, 2.5},
+             0.2,
+             0.0,
+             0.0};
 
 // Window's size.
 int winWidth = 800;   // Window width in pixels.
@@ -124,6 +144,8 @@ GLuint ceilingTexObj;
 GLuint brickTexObj;
 GLuint checkerTexObj;
 GLuint spotsTexObj;
+GLuint featherTexObj;
+GLuint birdfaceTexObj;
 
 // Others.
 bool drawAxes = true;        // Draw world coordinate frame axes iff true.
@@ -136,7 +158,7 @@ void DrawRoom(void);
 void DrawTeapot(void);
 void DrawSphere(void);
 void DrawTable(void);
-void DrawMiniTable(void);
+void DrawBird(void);
 
 // Render the scene from the imaginary viewpoint and capture the image as
 // a texture map.
@@ -186,6 +208,7 @@ void MakeReflectionImage(void) {
   DrawRoom();
   DrawTeapot();
   DrawSphere();
+  DrawBird();
 
   // Step 6: Save texture
   glReadBuffer(GL_BACK);
@@ -231,6 +254,7 @@ void MyDisplay(void) {
   DrawTeapot();
   DrawSphere();
   DrawTable();
+  DrawBird();
 
   glutSwapBuffers();
 }
@@ -406,14 +430,15 @@ void setUpTextureMap(GLuint* texObjp, const char* texFilename) {
 
 // Set up texture maps
 void SetUpTextureMaps(void) {
-  // unsigned char* imageData = NULL;
-  // int imageWidth, imageHeight, numComponents;
-
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  GLuint* texObjsp[5] = {&woodTexObj, &ceilingTexObj, &brickTexObj, &checkerTexObj, &spotsTexObj};
-  const char* texFiles[5] = {woodTexFile, ceilingTexFile, brickTexFile, checkerTexFile, spotsTexFile};
-  for (int i = 0; i < 5; i++) {
+  GLuint* texObjsp[7] = {&woodTexObj, &ceilingTexObj, &brickTexObj,
+                         &checkerTexObj, &spotsTexObj, &featherTexObj,
+                         &birdfaceTexObj};
+  const char* texFiles[7] = {woodTexFile, ceilingTexFile, brickTexFile,
+                             checkerTexFile, spotsTexFile, featherTexFile,
+                             birdfaceTexFile};
+  for (int i = 0; i < 7; i++) {
     setUpTextureMap(texObjsp[i], texFiles[i]);
   }
 
@@ -435,10 +460,19 @@ void SetUpTextureMaps(void) {
   glGenTextures(1, &reflectionTexObj);
 }
 
+void MyTimer(int v) {
+  UNUSED(v);
+  bird.wingSwing += bird.wingSwingFactor;
+  bird.wingAngle = MAX_WING_ANGLE * sin(bird.wingSwing);  // Angle is -MAX_WING_ANGLE..MAX_WING_ANGLE
+  if (bird.wingAngle > 2 * PI) bird.wingAngle -= 2 * PI;
+  glutPostRedisplay();
+
+  glutTimerFunc(MS_BETWEEN_FRAMES, MyTimer, UNUNSED_VAR);
+}
+
 // The main function.
 int main(int argc, char** argv) {
   // Initialize GLUT and create window.
-
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
   glutInitWindowSize(winWidth, winHeight);
@@ -449,6 +483,7 @@ int main(int argc, char** argv) {
   glutReshapeFunc(MyReshape);
   glutKeyboardFunc(MyKeyboard);
   glutSpecialFunc(MySpecialKey);
+  glutTimerFunc(0, MyTimer, UNUNSED_VAR);
 
   // Initialize GLEW.
   // The followings make sure OpenGL 1.4 is supported and set up the extensions.
@@ -827,5 +862,132 @@ void DrawTable(void) {
   glScaled(TABLE_THICKNESS, TABLE_THICKNESS, TABLETOP_Z - TABLE_THICKNESS);
   glTranslated(0.0, 0.0, 0.5);
   glutSolidCube(1.0);
+  glPopMatrix();
+}
+
+// Draws a simple wing at (0,0,0) pointing in the y-direction.
+void DrawWing() {
+  double wingX = 0.2;
+  double wingY = 0.4;
+
+  // Top part
+  glNormal3f(0.0, 0.0, 1.0);
+  glBegin(GL_TRIANGLES);
+  glTexCoord2f(0.0, 1.0);
+  glVertex3f(wingX, 0.0, WING_THICKNESS);
+  glTexCoord2f(1.0, 1.0);
+  glVertex3f(wingX, wingY, WING_THICKNESS);
+  glTexCoord2f(0.0, 0.0);
+  glVertex3f(-wingX, 0.0, WING_THICKNESS);
+  glEnd();
+
+  // Bottom part
+  glNormal3f(0.0, 0.0, -1.0);
+  glBegin(GL_TRIANGLES);
+  glTexCoord2f(0.0, 0.0);
+  glVertex3f(-wingX, 0.0, 0.0);
+  glTexCoord2f(1.0, 1.0);
+  glVertex3f(wingX, wingY, 0.0);
+  glTexCoord2f(0.0, 1.0);
+  glVertex3f(wingX, 0.0, 0.0);
+  glEnd();
+
+  // +x rectangle
+  glNormal3f(1.0, 0.0, 0.0);
+  SubdivideAndDrawQuad(10, 10,
+                       0.0, 0.0, wingX, 0.0, 0.0,
+                       1.0, 0.0, wingX, wingY, 0.0,
+                       1.0, 1.0, wingX, wingY, WING_THICKNESS,
+                       0.0, 1.0, wingX, 0.0, WING_THICKNESS);
+
+  // hypotenus rectangle, +yz direction
+  glNormal3f(0.0, 1.0, 1.0);
+  SubdivideAndDrawQuad(10, 10,
+                       0.0, 0.0, -wingX, 0.0, 0.0,
+                       1.0, 0.0, -wingX, 0.0, WING_THICKNESS,
+                       1.0, 1.0, wingX, wingY, WING_THICKNESS,
+                       0.0, 1.0, wingX, wingY, 0.0);
+
+  // It isn't necessary to draw -y facing rectangle since it can't be seen anyway
+}
+
+void DrawBird() {
+  GLfloat birdAmbient[] = {0.8, 0.8, 0.8, 1.0};
+  GLfloat birdDiffuse[] = {0.86, 0.86, 0.86, 1.0};
+  GLfloat birdSpecular[] = {0.1, 0.1, 0.1, 1.0};
+  GLfloat birdShininess[] = {5.0};
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, birdAmbient);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, birdDiffuse);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, birdSpecular);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, birdShininess);
+
+  glBindTexture(GL_TEXTURE_2D, featherTexObj);
+
+  // Draw right wing
+  glPushMatrix();
+  glTranslated(bird.pos[0], bird.pos[1] + 0.07, bird.pos[2]);
+  glRotated(bird.wingAngle, 1.0, 0.0, 0.0);
+  DrawWing();
+  glPopMatrix();
+
+  // Draw left wing
+  glPushMatrix();
+  glTranslated(bird.pos[0], bird.pos[1] - 0.07, WING_THICKNESS + bird.pos[2]);
+  glRotated(-bird.wingAngle, 1.0, 0.0, 0.0);
+  glScaled(1.0, -1.0, -1.0);
+  DrawWing();
+  glPopMatrix();
+
+  // Draw rectangle
+  glPushMatrix();
+  glTranslated(0.0, 0.0, bird.pos[2]);
+  // -y rectangle
+  glNormal3f(0.0, -1.0, 0.0);
+  SubdivideAndDrawQuad(10, 10,
+                       0.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, -WING_THICKNESS,
+                       1.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, -WING_THICKNESS,
+                       1.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS,
+                       0.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS);
+
+  // +y rectangle
+  glNormal3f(0.0, 1.0, 0.0);
+  SubdivideAndDrawQuad(10, 10,
+                       0.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS,
+                       1.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS,
+                       1.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, -WING_THICKNESS,
+                       0.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, -WING_THICKNESS);
+
+  // +z rectangle
+  glNormal3f(0.0, 0.0, 1.0);
+  SubdivideAndDrawQuad(10, 10,
+                       0.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS,
+                       1.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS,
+                       1.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS,
+                       0.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS);
+
+  // -z rectangle
+  glNormal3f(-1.0, 0.0, 0.0);
+  SubdivideAndDrawQuad(10, 10,
+                       0.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, -WING_THICKNESS,
+                       1.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, -WING_THICKNESS,
+                       1.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, -WING_THICKNESS,
+                       0.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, -WING_THICKNESS);
+
+  // -x rectangle
+  glNormal3f(0.0, 0.0, -1.0);
+  SubdivideAndDrawQuad(10, 10,
+                       0.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS,
+                       1.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS,
+                       1.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, -WING_THICKNESS,
+                       0.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, -WING_THICKNESS);
+
+  // +x rectangle
+  glBindTexture(GL_TEXTURE_2D, birdfaceTexObj);
+  glNormal3f(0.0, 0.0, 1.0);
+  SubdivideAndDrawQuad(10, 10,
+                       0.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, -WING_THICKNESS,
+                       1.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, -WING_THICKNESS,
+                       1.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS,
+                       0.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS);
   glPopMatrix();
 }
