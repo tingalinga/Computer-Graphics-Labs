@@ -46,12 +46,19 @@
 #define TABLETOP_Z 1.2  // This is the z coordinate of the top-most face of the table.
 #define TABLE_THICKNESS 0.1
 
-#define OBJ_CENTER_X 0.75
-#define OBJ_CENTER_Y -0.5
+#define BIRD_X 0.4
+#define BIRD_Y -0.4
+#define BIRD_Z 2.5               // This is z cordinate of the bottom of the bird wings when angle is 0.
+#define BIRD_WINGSWING_RATE 0.2  // How fast the wings are swinging
 
+#define BIRD_LEN 0.8
+#define BIRD_WIDTH 0.2
 #define WING_THICKNESS 0.05
-// The followings are for navigation and setting the view of the (actual) eye.
 
+#define BIRD_HALF_LEN (0.5 * BIRD_LEN)
+#define BIRD_HALF_WIDTH (0.5 * BIRD_WIDTH)
+
+// The followings are for navigation and setting the view of the (actual) eye.
 #define LOOKAT_X 0.0  // Look-at point x coordinate.
 #define LOOKAT_Y 0.0  // Look-at point y coordinate.
 #define LOOKAT_Z 1.0  // Look-at point z coordinate.
@@ -108,16 +115,14 @@ const char birdfaceTexFile[] = "images/birdface.jpg";
 /////////////////////////////////////////////////////////////////////////////
 
 typedef struct Bird {
-  double pos[3];           // World-position of bird
-  double wingSwingFactor;  // Factor with which wings swing
-  double wingSwing;        // Current wing swing value
-  double wingAngle;        // Angle to be computed and stored from wingSwing
+  double pos[3];         // World-position of bird
+  double wingSwingRate;  // Rate with which wings swing
+  double wingSwing;      // Current wing swing value
+  double wingAngle;      // Angle to be computed and stored from wingSwing
 } Bird;
 
-Bird bird = {{0.4, -0.4, 2.5},
-             0.2,
-             0.0,
-             0.0};
+// Just make one bird for now - would be easy to add more in though
+Bird bird = {{BIRD_X, BIRD_Y, BIRD_Z}, BIRD_WINGSWING_RATE, 0.0, 0.0};
 
 // Window's size.
 int winWidth = 800;   // Window width in pixels.
@@ -127,7 +132,6 @@ int winHeight = 600;  // Window height in pixels.
 // Initial eye position is at [EYE_INIT_DIST, 0, 0] + [LOOKAT_X, LOOKAT_Y, LOOKAT_Z]
 // in the world space, looking at [LOOKAT_X, LOOKAT_Y, LOOKAT_Z].
 // The up-vector is always [0, 0, 1].
-
 double eyeLatitude = 0.0;
 double eyeLongitude = 0.0;
 double eyeDistance = EYE_INIT_DIST;
@@ -151,6 +155,7 @@ GLuint birdfaceTexObj;
 bool drawAxes = true;        // Draw world coordinate frame axes iff true.
 bool drawWireframe = false;  // Draw polygons in wireframe if true, otherwise polygons are filled.
 bool hasTexture = true;      // Toggle texture mapping.
+bool showAnimation = true;   // Show bird wings animation if true
 
 // Forward function declarations.
 void DrawAxes(double length);
@@ -259,6 +264,23 @@ void MyDisplay(void) {
   glutSwapBuffers();
 }
 
+// Timer function for bird wing swing
+void MyTimer(int v) {
+  UNUSED(v);
+  if (!showAnimation) return;
+
+  // Add the wingswing rate to current wingswing
+  bird.wingSwing += bird.wingSwingRate;
+  // Taking the sinus of the wingswing will give us values between -1..1
+  // that are smooth resulting in beautiful wing swings that are the slowest
+  // at the top/bottom and fastest at the middle.
+  bird.wingAngle = MAX_WING_ANGLE * sin(bird.wingSwing);
+  if (bird.wingAngle >= 2.0 * PI) bird.wingAngle -= 2.0 * PI;
+  glutPostRedisplay();
+
+  glutTimerFunc(MS_BETWEEN_FRAMES, MyTimer, UNUNSED_VAR);
+}
+
 // The keyboard callback function.
 void MyKeyboard(unsigned char key, int x, int y) {
   UNUSED(x);
@@ -295,12 +317,20 @@ void MyKeyboard(unsigned char key, int x, int y) {
     glutPostRedisplay();
     break;
 
-    // Reset to initial view.
+  // Reset to initial view.
   case 'r':
   case 'R':
     eyeLatitude = 0.0;
     eyeLongitude = 0.0;
     eyeDistance = EYE_INIT_DIST;
+    glutPostRedisplay();
+    break;
+
+  // Toggle bird wing swing animation
+  case 's':
+  case 'S':
+    showAnimation = !showAnimation;
+    glutTimerFunc(0, MyTimer, UNUNSED_VAR);
     glutPostRedisplay();
     break;
   }
@@ -404,6 +434,7 @@ void GLInit(void) {
   glEnable(GL_NORMALIZE);
 }
 
+// Refactor of original code in SetUpTextureMaps() to a function
 void setUpTextureMap(GLuint* texObjp, const char* texFilename) {
   unsigned char* imageData = NULL;
   int imageWidth, imageHeight, numComponents;
@@ -432,12 +463,13 @@ void setUpTextureMap(GLuint* texObjp, const char* texFilename) {
 void SetUpTextureMaps(void) {
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  GLuint* texObjsp[7] = {&woodTexObj, &ceilingTexObj, &brickTexObj,
-                         &checkerTexObj, &spotsTexObj, &featherTexObj,
-                         &birdfaceTexObj};
-  const char* texFiles[7] = {woodTexFile, ceilingTexFile, brickTexFile,
-                             checkerTexFile, spotsTexFile, featherTexFile,
-                             birdfaceTexFile};
+  GLuint* texObjsp[7] = {
+      &woodTexObj, &ceilingTexObj, &brickTexObj, &checkerTexObj,
+      &spotsTexObj, &featherTexObj, &birdfaceTexObj};
+  const char* texFiles[7] = {
+      woodTexFile, ceilingTexFile, brickTexFile, checkerTexFile,
+      spotsTexFile, featherTexFile, birdfaceTexFile};
+
   for (int i = 0; i < 7; i++) {
     setUpTextureMap(texObjsp[i], texFiles[i]);
   }
@@ -457,17 +489,9 @@ void SetUpTextureMaps(void) {
   //****************************
 
   // This texture object is for storing the reflection image read from the color buffer.
+  // Most of the setup that is otherwise done once in setUpTextureMap() for other textures
+  // is continually done for this in MakeReflectionImage().
   glGenTextures(1, &reflectionTexObj);
-}
-
-void MyTimer(int v) {
-  UNUSED(v);
-  bird.wingSwing += bird.wingSwingFactor;
-  bird.wingAngle = MAX_WING_ANGLE * sin(bird.wingSwing);  // Angle is -MAX_WING_ANGLE..MAX_WING_ANGLE
-  if (bird.wingAngle > 2 * PI) bird.wingAngle -= 2 * PI;
-  glutPostRedisplay();
-
-  glutTimerFunc(MS_BETWEEN_FRAMES, MyTimer, UNUNSED_VAR);
 }
 
 // The main function.
@@ -512,6 +536,7 @@ int main(int argc, char** argv) {
   printf("Press SHIFT+DOWN to move further.\n");
   printf("Press 'W' to toggle wireframe.\n");
   printf("Press 'T' to toggle texture mapping.\n");
+  printf("Press 'S' to toggle wingswing animation.\n");
   printf("Press 'X' to toggle axes.\n");
   printf("Press 'R' to reset to initial view.\n");
   printf("Press 'Q' to quit.\n\n");
@@ -771,7 +796,6 @@ void DrawTable(void) {
   // WRITE YOUR CODE HERE.
   //****************************
   glBindTexture(GL_TEXTURE_2D, reflectionTexObj);
-  // glColor4f(1.0, 1.0, 1.0, 0.5);
 
   glNormal3f(0.0, 0.0, 1.0);  // Normal vector.
   SubdivideAndDrawQuad(24, 24,
@@ -865,32 +889,34 @@ void DrawTable(void) {
   glPopMatrix();
 }
 
-// Draws a simple wing at (0,0,0) pointing in the y-direction.
+// Draws a simple wing at x-center on the z=0 plane pointing in the y-direction
 void DrawWing() {
   double wingX = 0.2;
   double wingY = 0.4;
+  // clang-format off
 
   // Top part
   glNormal3f(0.0, 0.0, 1.0);
   glBegin(GL_TRIANGLES);
-  glTexCoord2f(0.0, 1.0);
-  glVertex3f(wingX, 0.0, WING_THICKNESS);
-  glTexCoord2f(1.0, 1.0);
-  glVertex3f(wingX, wingY, WING_THICKNESS);
-  glTexCoord2f(0.0, 0.0);
-  glVertex3f(-wingX, 0.0, WING_THICKNESS);
+    glTexCoord2f(0.0, 1.0);
+    glVertex3f(wingX, 0.0, WING_THICKNESS);
+    glTexCoord2f(1.0, 1.0);
+    glVertex3f(wingX, wingY, WING_THICKNESS);
+    glTexCoord2f(0.0, 0.0);
+    glVertex3f(-wingX, 0.0, WING_THICKNESS);
   glEnd();
 
   // Bottom part
   glNormal3f(0.0, 0.0, -1.0);
   glBegin(GL_TRIANGLES);
-  glTexCoord2f(0.0, 0.0);
-  glVertex3f(-wingX, 0.0, 0.0);
-  glTexCoord2f(1.0, 1.0);
-  glVertex3f(wingX, wingY, 0.0);
-  glTexCoord2f(0.0, 1.0);
-  glVertex3f(wingX, 0.0, 0.0);
+    glTexCoord2f(0.0, 0.0);
+    glVertex3f(-wingX, 0.0, 0.0);
+    glTexCoord2f(1.0, 1.0);
+    glVertex3f(wingX, wingY, 0.0);
+    glTexCoord2f(0.0, 1.0);
+    glVertex3f(wingX, 0.0, 0.0);
   glEnd();
+  // clang-format on
 
   // +x rectangle
   glNormal3f(1.0, 0.0, 0.0);
@@ -900,17 +926,19 @@ void DrawWing() {
                        1.0, 1.0, wingX, wingY, WING_THICKNESS,
                        0.0, 1.0, wingX, 0.0, WING_THICKNESS);
 
-  // hypotenus rectangle, +yz direction
-  glNormal3f(0.0, 1.0, 1.0);
+  // hypotenus rectangle, -x +y direction
+  glNormal3f(-1.0, 1.0, 0.0);
   SubdivideAndDrawQuad(10, 10,
                        0.0, 0.0, -wingX, 0.0, 0.0,
                        1.0, 0.0, -wingX, 0.0, WING_THICKNESS,
                        1.0, 1.0, wingX, wingY, WING_THICKNESS,
                        0.0, 1.0, wingX, wingY, 0.0);
 
-  // It isn't necessary to draw -y facing rectangle since it can't be seen anyway
+  // It isn't necessary to draw -y facing rectangle since it can't be seen
+  // because of the bird's body anyway
 }
 
+// Sets up the lighting and texture properties of the bird and draws it.
 void DrawBird() {
   GLfloat birdAmbient[] = {0.8, 0.8, 0.8, 1.0};
   GLfloat birdDiffuse[] = {0.86, 0.86, 0.86, 1.0};
@@ -922,72 +950,77 @@ void DrawBird() {
   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, birdShininess);
 
   glBindTexture(GL_TEXTURE_2D, featherTexObj);
+  // clang-format off
 
   // Draw right wing
   glPushMatrix();
-  glTranslated(bird.pos[0], bird.pos[1] + 0.07, bird.pos[2]);
-  glRotated(bird.wingAngle, 1.0, 0.0, 0.0);
-  DrawWing();
+    glTranslated(bird.pos[0], bird.pos[1] + 0.7 * BIRD_HALF_WIDTH, bird.pos[2]);
+    glRotated(bird.wingAngle, 1.0, 0.0, 0.0);
+    DrawWing();
   glPopMatrix();
 
   // Draw left wing
   glPushMatrix();
-  glTranslated(bird.pos[0], bird.pos[1] - 0.07, WING_THICKNESS + bird.pos[2]);
-  glRotated(-bird.wingAngle, 1.0, 0.0, 0.0);
-  glScaled(1.0, -1.0, -1.0);
-  DrawWing();
+    // The extra WING_THICKNESS is added in the z-part because of the flipping when scaling
+    glTranslated(bird.pos[0], bird.pos[1] - 0.7 * BIRD_HALF_WIDTH, WING_THICKNESS + bird.pos[2]);
+    glRotated(bird.wingAngle, -1.0, 0.0, 0.0);
+    // Flip the wing
+    glScaled(1.0, -1.0, -1.0);
+    DrawWing();
   glPopMatrix();
 
-  // Draw rectangle
+  // RECTANGLES
   glPushMatrix();
-  glTranslated(0.0, 0.0, bird.pos[2]);
-  // -y rectangle
-  glNormal3f(0.0, -1.0, 0.0);
-  SubdivideAndDrawQuad(10, 10,
-                       0.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, -WING_THICKNESS,
-                       1.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, -WING_THICKNESS,
-                       1.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS,
-                       0.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS);
+    glTranslated(0.0, 0.0, bird.pos[2]);
+    // -y rectangle
+    glNormal3f(0.0, -1.0, 0.0);
+    SubdivideAndDrawQuad(10, 10,
+                        0.0, 0.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, -WING_THICKNESS,
+                        1.0, 0.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, -WING_THICKNESS,
+                        1.0, 1.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
+                        0.0, 1.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS);
 
-  // +y rectangle
-  glNormal3f(0.0, 1.0, 0.0);
-  SubdivideAndDrawQuad(10, 10,
-                       0.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS,
-                       1.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS,
-                       1.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, -WING_THICKNESS,
-                       0.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, -WING_THICKNESS);
+    // +y rectangle
+    glNormal3f(0.0, 1.0, 0.0);
+    SubdivideAndDrawQuad(10, 10,
+                        0.0, 1.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
+                        1.0, 1.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
+                        1.0, 0.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, -WING_THICKNESS,
+                        0.0, 0.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, -WING_THICKNESS);
 
-  // +z rectangle
-  glNormal3f(0.0, 0.0, 1.0);
-  SubdivideAndDrawQuad(10, 10,
-                       0.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS,
-                       1.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS,
-                       1.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS,
-                       0.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS);
+    // +z rectangle
+    glNormal3f(0.0, 0.0, 1.0);
+    SubdivideAndDrawQuad(10, 10,
+                        0.0, 1.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
+                        1.0, 1.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
+                        1.0, 0.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
+                        0.0, 0.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS);
 
-  // -z rectangle
-  glNormal3f(-1.0, 0.0, 0.0);
-  SubdivideAndDrawQuad(10, 10,
-                       0.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, -WING_THICKNESS,
-                       1.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, -WING_THICKNESS,
-                       1.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, -WING_THICKNESS,
-                       0.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, -WING_THICKNESS);
+    // -z rectangle
+    glNormal3f(-1.0, 0.0, 0.0);
+    SubdivideAndDrawQuad(10, 10,
+                        0.0, 0.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, -WING_THICKNESS,
+                        1.0, 0.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, -WING_THICKNESS,
+                        1.0, 1.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, -WING_THICKNESS,
+                        0.0, 1.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, -WING_THICKNESS);
 
-  // -x rectangle
-  glNormal3f(0.0, 0.0, -1.0);
-  SubdivideAndDrawQuad(10, 10,
-                       0.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS,
-                       1.0, 1.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS,
-                       1.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] + 0.1, -WING_THICKNESS,
-                       0.0, 0.0, bird.pos[0] - 0.5, bird.pos[1] - 0.1, -WING_THICKNESS);
+    // -x rectangle
+    glNormal3f(0.0, 0.0, -1.0);
+    SubdivideAndDrawQuad(10, 10,
+                        0.0, 1.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
+                        1.0, 1.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
+                        1.0, 0.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, -WING_THICKNESS,
+                        0.0, 0.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, -WING_THICKNESS);
 
-  // +x rectangle
-  glBindTexture(GL_TEXTURE_2D, birdfaceTexObj);
-  glNormal3f(0.0, 0.0, 1.0);
-  SubdivideAndDrawQuad(10, 10,
-                       0.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, -WING_THICKNESS,
-                       1.0, 0.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, -WING_THICKNESS,
-                       1.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] + 0.1, 3.0 * WING_THICKNESS,
-                       0.0, 1.0, bird.pos[0] + 0.5, bird.pos[1] - 0.1, 3.0 * WING_THICKNESS);
+    // This rectangle will be the face of the bird
+    glBindTexture(GL_TEXTURE_2D, birdfaceTexObj);
+    // +x rectangle
+    glNormal3f(0.0, 0.0, 1.0);
+    SubdivideAndDrawQuad(10, 10,
+                        0.0, 0.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, -WING_THICKNESS,
+                        1.0, 0.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, -WING_THICKNESS,
+                        1.0, 1.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
+                        0.0, 1.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS);
   glPopMatrix();
+  // clang-format on
 }
