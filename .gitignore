@@ -4,6 +4,9 @@
 *.exe
 *-ori.cpp
 *.o
+*.vcxproj
+*.sln
+
 
 # Library files
 *.dll
