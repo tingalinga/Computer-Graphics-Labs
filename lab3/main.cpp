@@ -997,7 +997,7 @@ void DrawBird() {
                         0.0, 0.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS);
 
     // -z rectangle
-    glNormal3f(-1.0, 0.0, 0.0);
+    glNormal3f(0.0, 0.0, -1.0);
     SubdivideAndDrawQuad(10, 10,
                         0.0, 0.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, -WING_THICKNESS,
                         1.0, 0.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, -WING_THICKNESS,
@@ -1005,7 +1005,7 @@ void DrawBird() {
                         0.0, 1.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, -WING_THICKNESS);
 
     // -x rectangle
-    glNormal3f(0.0, 0.0, -1.0);
+    glNormal3f(-1.0, 0.0, 0.0);
     SubdivideAndDrawQuad(10, 10,
                         0.0, 1.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
                         1.0, 1.0, bird.pos[0] - BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, 3.0 * WING_THICKNESS,
@@ -1015,7 +1015,7 @@ void DrawBird() {
     // This rectangle will be the face of the bird
     glBindTexture(GL_TEXTURE_2D, birdfaceTexObj);
     // +x rectangle
-    glNormal3f(0.0, 0.0, 1.0);
+    glNormal3f(1.0, 0.0, 0.0);
     SubdivideAndDrawQuad(10, 10,
                         0.0, 0.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] - BIRD_HALF_WIDTH, -WING_THICKNESS,
                         1.0, 0.0, bird.pos[0] + BIRD_HALF_LEN, bird.pos[1] + BIRD_HALF_WIDTH, -WING_THICKNESS,
