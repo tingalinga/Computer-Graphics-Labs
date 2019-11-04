@@ -1,61 +1,72 @@
-#include "Triangle.h"
 #include <cmath>
+#include "Triangle.h"
 
 using namespace std;
 
-bool Triangle::hit(const Ray &r, double tmin, double tmax, SurfaceHitRecord &rec) const {
-  Vector3d e1 = v1 - v0;
-  Vector3d e2 = v2 - v0;
-  Vector3d p = cross(r.direction(), e2);
-  double a = dot(e1, p);
-  //if ( a == 0.0 ) return false;
-  double f = 1.0 / a;
-  Vector3d s = r.origin() - v0;
-  double beta = f * dot(s, p);
-  if (beta < 0.0 || beta > 1.0) return false;
 
-  Vector3d q = cross(s, e1);
-  double gamma = f * dot(r.direction(), q);
-  if (gamma < 0.0 || beta + gamma > 1.0) return false;
 
-  double t = f * dot(e2, q);
+bool Triangle::hit( const Ray &r, double tmin, double tmax, SurfaceHitRecord &rec ) const 
+{   
+    Vector3d e1 = v1 - v0;
+    Vector3d e2 = v2 - v0;
+    Vector3d p = cross( r.direction(), e2 );    
+    double a = dot( e1, p );
+    //if ( a == 0.0 ) return false;
+    double f = 1.0 / a;
+    Vector3d s = r.origin() - v0;
+    double beta = f * dot( s, p );
+    if ( beta < 0.0 || beta > 1.0 ) return false;
 
-  if (t >= tmin && t <= tmax) {
-    // We have a hit -- populat hit record.
-    rec.t = t;
-    rec.p = r.pointAtParam(t);
-    double alpha = 1.0 - beta - gamma;
-    rec.normal = alpha * n0 + beta * n1 + gamma * n2;
-    rec.mat_ptr = matp;
-    return true;
-  }
-  return false;
+    Vector3d q = cross( s, e1 );
+    double gamma = f * dot( r.direction(), q );
+    if ( gamma < 0.0 || beta + gamma > 1.0 ) return false;
+
+    double t = f * dot( e2, q );
+
+    if ( t >= tmin && t <= tmax )
+    {
+        // We have a hit -- populat hit record. 
+        rec.t = t;
+        rec.p = r.pointAtParam(t);
+        double alpha = 1.0 - beta - gamma;
+        rec.normal = alpha * n0 + beta * n1 + gamma * n2;
+        rec.mat_ptr = matp;
+        return true;
+    }
+    return false;
 }
 
-bool Triangle::shadowHit(const Ray &r, double tmin, double tmax) const {
-  Vector3d e1 = v1 - v0;
-  Vector3d e2 = v2 - v0;
-  Vector3d p = cross(r.direction(), e2);
-  double a = dot(e1, p);
-  //if ( a == 0.0 ) return false;
-  double f = 1.0 / a;
-  Vector3d s = r.origin() - v0;
-  double beta = f * dot(s, p);
-  if (beta < 0.0 || beta > 1.0) return false;
 
-  Vector3d q = cross(s, e1);
-  double gamma = f * dot(r.direction(), q);
-  if (gamma < 0.0 || beta + gamma > 1.0) return false;
 
-  double t = f * dot(e2, q);
-  return (t >= tmin && t <= tmax);
+bool Triangle::shadowHit( const Ray &r, double tmin, double tmax ) const 
+{
+    Vector3d e1 = v1 - v0;
+    Vector3d e2 = v2 - v0;
+    Vector3d p = cross( r.direction(), e2 );    
+    double a = dot( e1, p );
+    //if ( a == 0.0 ) return false;
+    double f = 1.0 / a;
+    Vector3d s = r.origin() - v0;
+    double beta = f * dot( s, p );
+    if ( beta < 0.0 || beta > 1.0 ) return false;
+
+    Vector3d q = cross( s, e1 );
+    double gamma = f * dot( r.direction(), q );
+    if ( gamma < 0.0 || beta + gamma > 1.0 ) return false;
+
+    double t = f * dot( e2, q );
+    return ( t >= tmin && t <= tmax );
 }
 
-/*
+
+
+
+
+/* 
 // Below is a more straightforward implementation, which is closer to that described in lecture.
 
 
-bool Triangle::hit( const Ray &r, double tmin, double tmax, SurfaceHitRecord &rec ) const
+bool Triangle::hit( const Ray &r, double tmin, double tmax, SurfaceHitRecord &rec ) const 
 {
     double A = v0.x() - v1.x();
     double B = v0.y() - v1.y();
@@ -95,7 +106,7 @@ bool Triangle::hit( const Ray &r, double tmin, double tmax, SurfaceHitRecord &re
 
     if ( t >= tmin && t <= tmax )
     {
-        // We have a hit -- populat hit record.
+        // We have a hit -- populat hit record. 
         rec.t = t;
         rec.p = r.pointAtParam(t);
         double alpha = 1.0 - beta - gamma;
@@ -109,7 +120,7 @@ bool Triangle::hit( const Ray &r, double tmin, double tmax, SurfaceHitRecord &re
 
 
 
-bool Triangle::shadowHit( const Ray &r, double tmin, double tmax ) const
+bool Triangle::shadowHit( const Ray &r, double tmin, double tmax ) const 
 {
     double A = v0.x() - v1.x();
     double B = v0.y() - v1.y();

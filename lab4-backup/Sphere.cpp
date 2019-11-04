@@ -6,8 +6,8 @@
 //
 // ============================================================
 
-#include "Sphere.h"
 #include <cmath>
+#include "Sphere.h"
 
 using namespace std;
 
@@ -21,25 +21,29 @@ using namespace std;
 #define UNUNSED_VAR 0
 #endif
 
-bool Sphere::hit(const Ray &r, double tmin, double tmax, SurfaceHitRecord &rec) const {
-  UNUSED(r);
-  UNUSED(tmin);
-  UNUSED(tmax);
-  UNUSED(rec);
-  //***********************************************
-  //*********** WRITE YOUR CODE HERE **************
-  //***********************************************
 
-  return false;  // You can remove/change this if needed.
+
+bool Sphere::hit(const Ray &r, double tmin, double tmax, SurfaceHitRecord &rec) const {
+    UNUSED(r);
+    UNUSED(tmin);
+    UNUSED(tmax);
+    UNUSED(rec);
+    //***********************************************
+    //*********** WRITE YOUR CODE HERE **************
+    //***********************************************
+
+    return false; // You can remove/change this if needed.
 }
 
-bool Sphere::shadowHit(const Ray &r, double tmin, double tmax) const {
-  UNUSED(r);
-  UNUSED(tmin);
-  UNUSED(tmax);
-  //***********************************************
-  //*********** WRITE YOUR CODE HERE **************
-  //***********************************************
 
-  return false;  // You can remove/change this if needed.
+
+bool Sphere::shadowHit(const Ray &r, double tmin, double tmax) const {
+    UNUSED(r);
+    UNUSED(tmin);
+    UNUSED(tmax);
+    //***********************************************
+    //*********** WRITE YOUR CODE HERE **************
+    //***********************************************
+
+    return false; // You can remove/change this if needed.
 }

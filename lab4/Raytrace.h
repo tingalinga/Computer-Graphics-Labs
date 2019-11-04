@@ -5,21 +5,16 @@
 #include "Ray.h"
 #include "Scene.h"
 
+class Raytrace {
+  public:
+  //////////////////////////////////////////////////////////////////////////////
+  // Traces a ray into the scene.
+  // reflectLevel: specfies number of levels of reflections (0 for no reflection).
+  // hasShadow: specifies whether to generate shadows.
+  //////////////////////////////////////////////////////////////////////////////
 
-class Raytrace
-{
-public:
-
-    //////////////////////////////////////////////////////////////////////////////
-    // Traces a ray into the scene.
-    // reflectLevel: specfies number of levels of reflections (0 for no reflection).
-    // hasShadow: specifies whether to generate shadows.
-    //////////////////////////////////////////////////////////////////////////////
-
-    static Color TraceRay( const Ray &ray, const Scene &scene, 
-                           int reflectLevels, bool hasShadow );
-
+  static Color TraceRay(const Ray &ray, const Scene &scene,
+                        int reflectLevels, bool hasShadow);
 };
 
-
-#endif // _RAYTRACE_H_
+#endif  // _RAYTRACE_H_
