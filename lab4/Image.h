@@ -68,10 +68,10 @@ class Image {
 
   // Disallow the use of copy constructor and assignment operator.
   Image(const Image &image) { UNUSED(image); }
-  Image &operator=(const Image &image) {
-    UNUSED(image);
-    return image;
-  }
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wreturn-type"
+  Image &operator=(const Image &image) { UNUSED(image); }
+  #pragma clang diagnostic pop
 
 };  // Image
 

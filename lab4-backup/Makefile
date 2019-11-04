@@ -1,6 +1,6 @@
 CC = g++
 FRAMEWORKS = -lGLEW -framework GLUT -framework OpenGL
-CFLAGS = -Wall -Wextra -Winline -Wno-deprecated -Wno-overflow -Og
+CFLAGS = -Wall -Wextra -Winline -Wno-deprecated -Og
 INCLUDE = -I./include/
 
 all:

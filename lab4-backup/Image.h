@@ -84,7 +84,7 @@ private:
 
     // Disallow the use of copy constructor and assignment operator.
     Image( const Image &image ) { UNUSED(image); }
-    Image &operator= ( const Image &image ) { UNUSED(image); return image; }
+    Image &operator= ( const Image &image ) { UNUSED(image); }
 
 }; // Image
 

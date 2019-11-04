@@ -157,7 +157,10 @@ class Util {
   //============================================================================
 
   static int Rand32(void) {
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Winteger-overflow"
     return (rand() * (RAND_MAX + 1) + rand());
+    #pragma clang diagnostic pop
   }
 
   // Returns a random value in the range [0, 1] from a uniform distribution.
@@ -172,7 +175,11 @@ class Util {
 
   // Return a random number from a normal distribution with mean=0 and s.d.=1.
   static double NormalRandom(void) {
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Winteger-overflow"
     double R1 = ((double) (rand() + 1)) / (RAND_MAX + 1);
+    #pragma clang diagnostic pop
+
     double R2 = ((double) (rand())) / RAND_MAX;
 
     return sqrt(-2.0 * log(R1)) * cos(2 * M_PI * R2);
