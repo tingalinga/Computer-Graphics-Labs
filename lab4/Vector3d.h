@@ -81,6 +81,7 @@ class Vector3d {
     v[1] = data[1];
     v[2] = data[2];
   }
+
   void getXYZ(float v[3]) const {
     v[0] = (float) data[0];
     v[1] = (float) data[1];
@@ -88,7 +89,6 @@ class Vector3d {
   }
 
   // Operators.
-
   double &operator[](int i) {
     assert(i >= 0 && i < 3);
     return data[i];
@@ -185,35 +185,63 @@ class Vector3d {
 
 // More unary and binary vector operators.
 
-inline Vector3d operator+(const Vector3d &v1, const Vector3d &v2) { return Vector3d(v1.data[0] + v2.data[0], v1.data[1] + v2.data[1], v1.data[2] + v2.data[2]); }
+inline Vector3d operator+(const Vector3d &v1, const Vector3d &v2) {
+  return Vector3d(v1.data[0] + v2.data[0], v1.data[1] + v2.data[1], v1.data[2] + v2.data[2]);
+}
 
-inline Vector3d operator-(const Vector3d &v1, const Vector3d &v2) { return Vector3d(v1.data[0] - v2.data[0], v1.data[1] - v2.data[1], v1.data[2] - v2.data[2]); }
+inline Vector3d operator-(const Vector3d &v1, const Vector3d &v2) {
+  return Vector3d(v1.data[0] - v2.data[0], v1.data[1] - v2.data[1], v1.data[2] - v2.data[2]);
+}
 
-inline Vector3d operator*(const Vector3d &v1, const Vector3d &v2) { return Vector3d(v1.data[0] * v2.data[0], v1.data[1] * v2.data[1], v1.data[2] * v2.data[2]); }
+inline Vector3d operator*(const Vector3d &v1, const Vector3d &v2) {
+  return Vector3d(v1.data[0] * v2.data[0], v1.data[1] * v2.data[1], v1.data[2] * v2.data[2]);
+}
 
-inline Vector3d operator/(const Vector3d &v1, const Vector3d &v2) { return Vector3d(v1.data[0] / v2.data[0], v1.data[1] / v2.data[1], v1.data[2] / v2.data[2]); }
+inline Vector3d operator/(const Vector3d &v1, const Vector3d &v2) {
+  return Vector3d(v1.data[0] / v2.data[0], v1.data[1] / v2.data[1], v1.data[2] / v2.data[2]);
+}
 
-inline Vector3d operator*(double a, const Vector3d &v) { return Vector3d(a * v.data[0], a * v.data[1], a * v.data[2]); }
+inline Vector3d operator*(double a, const Vector3d &v) {
+  return Vector3d(a * v.data[0], a * v.data[1], a * v.data[2]);
+}
 
-inline Vector3d operator*(const Vector3d &v, double a) { return Vector3d(a * v.data[0], a * v.data[1], a * v.data[2]); }
+inline Vector3d operator*(const Vector3d &v, double a) {
+  return Vector3d(a * v.data[0], a * v.data[1], a * v.data[2]);
+}
 
-inline Vector3d operator/(const Vector3d &v, double a) { return Vector3d(v.data[0] / a, v.data[1] / a, v.data[2] / a); }
+inline Vector3d operator/(const Vector3d &v, double a) {
+  return Vector3d(v.data[0] / a, v.data[1] / a, v.data[2] / a);
+}
 
-inline bool operator==(const Vector3d &v1, const Vector3d &v2) { return ((v1.data[0] == v2.data[0]) && (v1.data[1] == v2.data[1]) && (v1.data[2] == v2.data[2])); }
+inline bool operator==(const Vector3d &v1, const Vector3d &v2) {
+  return ((v1.data[0] == v2.data[0]) && (v1.data[1] == v2.data[1]) && (v1.data[2] == v2.data[2]));
+}
 
-inline bool operator!=(const Vector3d &v1, const Vector3d &v2) { return ((v1.data[0] != v2.data[0]) || (v1.data[1] != v2.data[1]) || (v1.data[2] != v2.data[2])); }
+inline bool operator!=(const Vector3d &v1, const Vector3d &v2) {
+  return ((v1.data[0] != v2.data[0]) || (v1.data[1] != v2.data[1]) || (v1.data[2] != v2.data[2]));
+}
 
-inline double dot(const Vector3d &v1, const Vector3d &v2) { return (v1.data[0] * v2.data[0]) + (v1.data[1] * v2.data[1]) + (v1.data[2] * v2.data[2]); }
+inline double dot(const Vector3d &v1, const Vector3d &v2) {
+  return (v1.data[0] * v2.data[0]) + (v1.data[1] * v2.data[1]) + (v1.data[2] * v2.data[2]);
+}
 
-inline Vector3d cross(const Vector3d &v1, const Vector3d &v2) { return Vector3d(v1.data[1] * v2.data[2] - v1.data[2] * v2.data[1],
-                                                                                v1.data[2] * v2.data[0] - v1.data[0] * v2.data[2],
-                                                                                v1.data[0] * v2.data[1] - v1.data[1] * v2.data[0]); }
+inline Vector3d cross(const Vector3d &v1, const Vector3d &v2) {
+  return Vector3d(v1.data[1] * v2.data[2] - v1.data[2] * v2.data[1],
+                  v1.data[2] * v2.data[0] - v1.data[0] * v2.data[2],
+                  v1.data[0] * v2.data[1] - v1.data[1] * v2.data[0]);
+}
 
 // Returns the normal vector of the triangle.
-inline Vector3d triNormal(const Vector3d &v1, const Vector3d &v2, const Vector3d &v3) { return cross(v2 - v1, v3 - v1); }
+inline Vector3d triNormal(const Vector3d &v1, const Vector3d &v2, const Vector3d &v3) {
+  return cross(v2 - v1, v3 - v1);
+}
 
-inline istream &operator>>(istream &is, Vector3d &v) { return (is >> v.x() >> v.y() >> v.z()); }
+inline istream &operator>>(istream &is, Vector3d &v) {
+  return (is >> v.x() >> v.y() >> v.z());
+}
 
-inline ostream &operator<<(ostream &os, Vector3d v) { return (os << v.x() << " " << v.y() << " " << v.z()); }
+inline ostream &operator<<(ostream &os, Vector3d v) {
+  return (os << v.x() << " " << v.y() << " " << v.z());
+}
 
 #endif  // _VECTOR3D_H_

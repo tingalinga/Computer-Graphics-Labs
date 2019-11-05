@@ -104,18 +104,14 @@ int main() {
   RenderImage(outImageFile1, scene1, reflectLevels1, hasShadow1);
   printf("Image completed.\n");
 
-  /*
-// Define Scene 2.
+  // Define Scene 2.
+  Scene scene2;
+  DefineScene2(scene2, imageWidth2, imageHeight2);
 
-    Scene scene2;
-    DefineScene2( scene2, imageWidth2, imageHeight2 );
-
-// Render Scene 2.
-
-    printf( "Render Scene 2...\n" );
-    RenderImage( outImageFile2, scene2, reflectLevels2, hasShadow2 );
-    printf( "Image completed.\n" );
-*/
+  // Render Scene 2.
+  // printf("Render Scene 2...\n");
+  // RenderImage(outImageFile2, scene2, reflectLevels2, hasShadow2);
+  // printf("Image completed.\n");
 
   printf("All done.\n");
   return 0;
@@ -227,8 +223,6 @@ void DefineScene2(Scene &scene, int imageWidth, int imageHeight) {
   UNUSED(scene);
   UNUSED(imageWidth);
   UNUSED(imageHeight);
-  UNUSED(imageWidth2);
-  UNUSED(imageHeight2);
   UNUSED(reflectLevels2);
   UNUSED(hasShadow2);
   UNUSED(outImageFile2);

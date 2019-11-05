@@ -1,9 +1,8 @@
 //============================================================
-// STUDENT NAME:
-// STUDENT NO.:
-// NUS EMAIL ADDRESS:
-// COMMENTS TO GRADER:
-//
+// STUDENT NAME: Soeren Hougaard Mulvad
+// STUDENT NO.: A0207552J
+// NUS EMAIL ADDRESS: e0445646@u.nus.edu
+// COMMENTS TO GRADER: None
 // ============================================================
 
 #include "Sphere.h"
@@ -11,35 +10,63 @@
 
 using namespace std;
 
-// A simple expression for silencing compiler warnings for
-// unused parameters without altering program flow
-#ifndef UNUSED
-#define UNUSED(expr) \
-  do {               \
-    (void) (expr);   \
-  } while (0)
-#define UNUNSED_VAR 0
-#endif
-
 bool Sphere::hit(const Ray &r, double tmin, double tmax, SurfaceHitRecord &rec) const {
-  UNUSED(r);
-  UNUSED(tmin);
-  UNUSED(tmax);
-  UNUSED(rec);
   //***********************************************
   //*********** WRITE YOUR CODE HERE **************
   //***********************************************
+  Vector3d oc = r.origin() - center;
+  double a = 1.0;  // dot(r.direction, r.direction) which we know is 1
+  double b = 2.0 * dot(r.direction(), oc);
+  double c = dot(oc, oc) - radius * radius;
+  double d = b * b - 4 * a * c;
 
-  return false;  // You can remove/change this if needed.
+  if (d < 0.0) return false;  // No real solutions
+  double dSqrt = sqrt(d);
+  double t1 = (-b - dSqrt) / (2.0 * a);
+  double t2 = (-b + dSqrt) / (2.0 * a);
+
+  // Use the closet (smallest) positive (or zero) t value
+  // NB: This doesn't take into the account if we were inside the sphere, but not
+  // needed for the computations we want to perform.
+  double tVal;
+  bool t1ClosestAndPos = t1 >= 0.0 && (t1 <= t2 || t2 < 0.0);
+  bool t2ClosestAndPos = t2 >= 0.0 && (t2 <= t1 || t1 < 0.0);
+
+  if (t1ClosestAndPos)
+    tVal = t1;
+  else if (t2ClosestAndPos)
+    tVal = t2;
+  else
+    return false;  // Else both t must be negative, meaning the ray is shooting away from the sphere
+
+  if (tVal < tmin || tVal > tmax) return false;
+
+  rec.t = tVal;
+  rec.p = r.pointAtParam(tVal);
+  rec.normal = rec.p.unitVector();
+  rec.mat_ptr = matp;
+  return true;
 }
 
 bool Sphere::shadowHit(const Ray &r, double tmin, double tmax) const {
-  UNUSED(r);
-  UNUSED(tmin);
-  UNUSED(tmax);
   //***********************************************
   //*********** WRITE YOUR CODE HERE **************
   //***********************************************
+  Vector3d oc = r.origin() - center;
+  double a = 1.0;
+  double b = 2.0 * dot(r.direction(), oc);
+  double c = dot(oc, oc) - radius * radius;
+  double d = b * b - 4 * a * c;
 
-  return false;  // You can remove/change this if needed.
+  if (d < 0.0) return false;
+
+  double dSqrt = sqrt(d);
+  double t1 = (-b - dSqrt) / (2.0 * a);
+  double t2 = (-b + dSqrt) / (2.0 * a);
+
+  bool t1ClosestAndPos = (t1 >= 0.0 && (t1 <= t2 || t2 < 0.0));
+  bool t2ClosestAndPos = (t2 >= 0.0 && (t2 <= t1 || t1 < 0.0));
+
+  return ((t1ClosestAndPos && t1 >= tmin && t1 <= tmax) ||
+          (t2ClosestAndPos && t2 >= tmin && t2 <= tmax));
 }
