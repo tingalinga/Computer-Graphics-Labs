@@ -38,7 +38,7 @@ bool Sphere::hit(const Ray &r, double tmin, double tmax, SurfaceHitRecord &rec) 
   if (tVal < tmin || tVal > tmax) return false;
   rec.t = tVal;
   rec.p = r.pointAtParam(tVal);
-  rec.normal = rec.p.unitVector();
+  rec.normal = (rec.p - center).unitVector();
   rec.mat_ptr = matp;
   return true;
 }

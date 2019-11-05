@@ -21,16 +21,6 @@
 
 using namespace std;
 
-// A simple expression for silencing compiler warnings for
-// unused parameters without altering program flow
-#ifndef UNUSED
-#define UNUSED(expr) \
-  do {               \
-    (void) (expr);   \
-  } while (0)
-#define UNUNSED_VAR 0
-#endif
-
 // This is for avoiding the "epsilon problem" or the shadow acne problem.
 #define DEFAULT_TMIN 10e-6
 
@@ -63,14 +53,26 @@ static Color computePhongLighting(const Vector3d &L, const Vector3d &N, const Ve
   return ptLight.I_source * (mat.k_d * N_dot_L + mat.k_r * R_dot_V_pow_n);
 }
 
+// Returns the index that contains the biggest absolute value in a direction vector
+// This is to minimize floating point error for the shadow caster
+// I.e [-20.0, 0.0000001, -3.1] -> 0
+int getMaxIdx(Vector3d dir) {
+  double maxIdx, dirAbsMax = -1;
+  for (int i = 0; i <= 2; i++) {
+    double absDirI = abs(dir[i]);
+    if (absDirI > dirAbsMax) {
+      dirAbsMax = absDirI;
+      maxIdx = i;
+    }
+  }
+  return maxIdx;
+}
+
 // Traces a ray into the scene.
 // reflectLevels: specfies number of levels of reflections (0 for no reflection).
 // hasShadow: specifies whether to generate shadows.
 Color Raytrace::TraceRay(const Ray &ray, const Scene &scene,
                          int reflectLevels, bool hasShadow) {
-  UNUSED(reflectLevels);
-  UNUSED(hasShadow);
-
   Ray uRay(ray);
   uRay.makeUnitDirection();  // Normalize ray direction.
 
@@ -100,32 +102,62 @@ Color Raytrace::TraceRay(const Ray &ray, const Scene &scene,
 
   Color result(0.0f, 0.0f, 0.0f);  // The result will be accumulated here.
 
-  ////////////////////////////////////
-  result = nearestHitRec.mat_ptr->k_d;  // REMOVE THIS LINE AFTER YOU HAVE FINISHED CODE BELOW.
-  ////////////////////////////////////
-
   // Add to result the phong lighting contributed by each point light source.
   // Compute for shadow if hasShadow is true.
 
   //***********************************************
   //*********** WRITE YOUR CODE HERE **************
   //***********************************************
+  for (int i = 0; i < scene.numPtLights; i++) {
+    // Make unit vector L pointing from position p to light point
+    Vector3d L = scene.ptLight[i].position - nearestHitRec.p;
+    L.makeUnitVector();
+
+    // Don't add lighting if light ray hits some surface before hitting light
+    bool lightReached = true;
+    if (hasShadow) {
+      Ray lRay = Ray(nearestHitRec.p, L);
+
+      // Calculate the maximum t-value using the fact that:
+      // lRay.origin() + tmax * lRay.direction() = scene.ptLight[i].position
+      // We can in principle do this for any single direction, but choose the
+      // one with the biggest absolute value as to minimize floating point error
+      Vector3d dir = lRay.direction();
+      double maxIdx = getMaxIdx(dir);
+      double tmax = (scene.ptLight[i].position[maxIdx] - lRay.origin()[maxIdx]) / dir[maxIdx];
+
+      for (int i = 0; i < scene.numSurfaces; i++) {
+        bool shadowHit = scene.surfacep[i]->shadowHit(lRay, DEFAULT_TMIN, tmax);
+        if (shadowHit) {
+          lightReached = false;
+          break;
+        }
+      }
+    }
+
+    // Only opaque surfaces, so it is simply a binary choice of there being phong
+    // lightning or not
+    if (lightReached)
+      result += computePhongLighting(L, N, V, *nearestHitRec.mat_ptr, scene.ptLight[i]);
+  }
 
   // Add to result the global ambient lighting.
-
   //***********************************************
   //*********** WRITE YOUR CODE HERE **************
   //***********************************************
+  result += scene.amLight.I_a * nearestHitRec.mat_ptr->k_a;
 
   // Add to result the reflection of the scene.
-
   //***********************************************
   //*********** WRITE YOUR CODE HERE **************
   //***********************************************
-
-  UNUSED(N);
-  UNUSED(V);
-  UNUSED(computePhongLighting);
+  if (reflectLevels > 0) {
+    Vector3d R = mirrorReflect(V, N);
+    Ray rRay = Ray(nearestHitRec.p, R);
+    rRay.makeUnitDirection();
+    Color reflected = TraceRay(rRay, scene, reflectLevels - 1, hasShadow);
+    result += nearestHitRec.mat_ptr->k_rg * reflected;
+  }
 
   return result;
 }

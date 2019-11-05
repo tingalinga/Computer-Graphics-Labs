@@ -33,9 +33,11 @@ using namespace std;
 // Constants for Scene 1.
 static const int imageHeight1 = 480;
 static const int imageWidth1 = 640;
-static const int reflectLevels1 = 2;  // 0 -- object does not reflect scene.
-static const int hasShadow1 = true;
-static const char outImageFile1[] = "out1.png";
+
+// TODO: Maybe comment these in again
+// static const int reflectLevels1 = 2;  // 0 -- object does not reflect scene.
+// static const int hasShadow1 = true;
+// static const char outImageFile1[] = "out1.png";
 
 // Constants for Scene 2.
 static const int imageWidth2 = 640;
@@ -94,24 +96,40 @@ int main() {
   // atexit(WaitForEnterKeyBeforeExit);
 
   // Define Scene 1.
+  if (false) {  // TODO: Comment this in again
+    Scene scene1;
+    DefineScene1(scene1, imageWidth1, imageHeight1);
 
-  Scene scene1;
-  DefineScene1(scene1, imageWidth1, imageHeight1);
+    // Render Scene 1.
+    for (int r = 0; r <= 2; r++) {    // reflectLevels [0, 1, 2]
+      for (int h = 0; h <= 1; h++) {  // hasShadow [0, 1] = [false, true]
+        // Construct output filename
+        string outputFile = "img_r" + to_string(r) + (h ? "s" : "") + ".png";
+        // Make C++ string to a char[]
+        char charArr[outputFile.length() + 1];
+        strcpy(charArr, outputFile.c_str());
 
-  // Render Scene 1.
+        printf("Render Scene 1 with %i reflection levels and %sshadows...\n",
+               r, h ? "" : "no ");
+        RenderImage(charArr, scene1, r, h);
+        printf("Image completed.\n\n");
+      }
+    }
+  }
 
-  printf("Render Scene 1...\n");
-  RenderImage(outImageFile1, scene1, reflectLevels1, hasShadow1);
-  printf("Image completed.\n");
+  // TODO: Maybe remove this.
+  // printf("Render Scene 1...\n");
+  // RenderImage(outImageFile1, scene1, reflectLevels1, hasShadow1);
+  // printf("Image completed.\n");
 
   // Define Scene 2.
   Scene scene2;
   DefineScene2(scene2, imageWidth2, imageHeight2);
 
   // Render Scene 2.
-  // printf("Render Scene 2...\n");
-  // RenderImage(outImageFile2, scene2, reflectLevels2, hasShadow2);
-  // printf("Image completed.\n");
+  printf("Render Scene 2...\n");
+  RenderImage(outImageFile2, scene2, reflectLevels2, hasShadow2);
+  printf("Image completed.\n");
 
   printf("All done.\n");
   return 0;
