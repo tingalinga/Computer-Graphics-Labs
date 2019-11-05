@@ -1,9 +1,8 @@
 //============================================================
-// STUDENT NAME:
-// STUDENT NO.:
-// NUS EMAIL ADDRESS:
-// COMMENTS TO GRADER:
-//
+// STUDENT NAME: Soeren Hougaard Mulvad
+// STUDENT NO.: A0207552J
+// NUS EMAIL ADDRESS: e0445646@u.nus.edu
+// COMMENTS TO GRADER: None
 // ============================================================
 
 #include "Raytrace.h"

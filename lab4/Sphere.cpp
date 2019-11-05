@@ -28,19 +28,14 @@ bool Sphere::hit(const Ray &r, double tmin, double tmax, SurfaceHitRecord &rec) 
   // Use the closet (smallest) positive (or zero) t value
   // NB: This doesn't take into the account if we were inside the sphere, but not
   // needed for the computations we want to perform.
-  double tVal;
   bool t1ClosestAndPos = t1 >= 0.0 && (t1 <= t2 || t2 < 0.0);
   bool t2ClosestAndPos = t2 >= 0.0 && (t2 <= t1 || t1 < 0.0);
 
-  if (t1ClosestAndPos)
-    tVal = t1;
-  else if (t2ClosestAndPos)
-    tVal = t2;
-  else
-    return false;  // Else both t must be negative, meaning the ray is shooting away from the sphere
+  // If both are negative it means the ray is pointing away from the sphere
+  if (!(t1ClosestAndPos || t2ClosestAndPos)) return false;
 
+  double tVal = t1ClosestAndPos ? t1 : t2;
   if (tVal < tmin || tVal > tmax) return false;
-
   rec.t = tVal;
   rec.p = r.pointAtParam(tVal);
   rec.normal = rec.p.unitVector();
