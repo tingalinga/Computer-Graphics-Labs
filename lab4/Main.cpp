@@ -73,7 +73,7 @@ void RenderImage(const char *imageFilename,
 
   double stopCPUTime = Util::GetCurrCPUTime();
   double stopTime = Util::GetCurrRealTime();
-  printf("CPU time taken = %.1f sec\n", stopCPUTime - startCPUTime);
+  printf("CPU time taken  = %.1f sec\n", stopCPUTime - startCPUTime);
   printf("Real time taken = %.1f sec\n", stopTime - startTime);
 
   // Write image to file.
@@ -90,7 +90,8 @@ void WaitForEnterKeyBeforeExit(void) {
 }
 
 int main() {
-  atexit(WaitForEnterKeyBeforeExit);
+  // TODO: Comment this in again
+  // atexit(WaitForEnterKeyBeforeExit);
 
   // Define Scene 1.
 
