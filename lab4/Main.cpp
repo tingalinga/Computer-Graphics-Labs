@@ -44,7 +44,7 @@ static const int imageWidth2 = 640;
 static const int imageHeight2 = 480;
 static const int reflectLevels2 = 2;  // 0 -- object does not reflect scene.
 static const int hasShadow2 = true;
-static const char outImageFile2[] = "out2.png";
+static const char outImageFile2[] = "img_scene2.png";
 
 // Raytrace the whole image of the scene and write it to a file.
 void RenderImage(const char *imageFilename,
@@ -238,13 +238,152 @@ void DefineScene1(Scene &scene, int imageWidth, int imageHeight) {
 
 // Modeling of Scene 2
 void DefineScene2(Scene &scene, int imageWidth, int imageHeight) {
-  UNUSED(scene);
-  UNUSED(imageWidth);
-  UNUSED(imageHeight);
-  UNUSED(reflectLevels2);
-  UNUSED(hasShadow2);
-  UNUSED(outImageFile2);
   //***********************************************
   //*********** WRITE YOUR CODE HERE **************
   //***********************************************
+  scene.backgroundColor = Color(0.0f, 0.0f, 1.0f);
+
+  scene.amLight.I_a = Color(1.0f, 1.0f, 1.0f) * 0.25f;
+
+  // Define materials.
+  scene.numMaterials = 5;
+  scene.material = new Material[scene.numMaterials];
+
+  // Very reflective dark blue.
+  scene.material[0].k_d = Color(0.2f, 0.2f, 0.9f);
+  scene.material[0].k_a = scene.material[0].k_d;
+  scene.material[0].k_r = Color(0.9f, 0.9f, 0.9f);
+  scene.material[0].k_rg = Color(0.8f, 0.8f, 0.8f) / 1.4f;
+  scene.material[0].n = 30.0f;
+
+  // Dark green
+  scene.material[1].k_d = Color(0.3f, 1.0f, 0.3f);
+  scene.material[1].k_a = scene.material[1].k_d;
+  scene.material[1].k_r = Color(0.2f, 0.4f, 0.2f);
+  scene.material[1].k_rg = Color(0.8f, 0.8f, 0.8f) / 4.0f;
+  scene.material[1].n = 30.0f;
+
+  // Light blue.
+  scene.material[2].k_d = Color(0.3f, 0.3f, 0.8f);
+  scene.material[2].k_a = scene.material[2].k_d;
+  scene.material[2].k_r = Color(0.8f, 0.8f, 0.8f) / 1.5f;
+  scene.material[2].k_rg = Color(0.8f, 0.8f, 0.8f) / 2.5f;
+  scene.material[2].n = 64.0f;
+
+  // Light red.
+  scene.material[3].k_d = Color(0.8f, 0.4f, 0.4f);
+  scene.material[3].k_a = scene.material[3].k_d;
+  scene.material[3].k_r = Color(0.8f, 0.8f, 0.8f) / 1.5f;
+  scene.material[3].k_rg = Color(0.8f, 0.8f, 0.8f) / 3.0f;
+  scene.material[3].n = 64.0f;
+
+  // Gray.
+  scene.material[4].k_d = Color(0.6f, 0.6f, 0.6f);
+  scene.material[4].k_a = scene.material[4].k_d;
+  scene.material[4].k_r = Color(0.6f, 0.6f, 0.6f);
+  scene.material[4].k_rg = Color(0.8f, 0.8f, 0.8f) / 3.0f;
+  scene.material[4].n = 128.0f;
+
+  // Define point light sources.
+  scene.numPtLights = 2;
+  scene.ptLight = new PointLightSource[scene.numPtLights];
+
+  scene.ptLight[0].I_source = Color(1.0f, 1.0f, 1.0f) * 0.4f;
+  scene.ptLight[0].position = Vector3d(100.0, 120.0, 10.0);
+
+  scene.ptLight[1].I_source = Color(1.0f, 1.0f, 1.0f) * 0.6f;
+  scene.ptLight[1].position = Vector3d(5.0, 80.0, 60.0);
+
+  // Define surface primitives.
+  scene.numSurfaces = 19;
+  scene.surfacep = new SurfacePtr[scene.numSurfaces];
+
+  scene.surfacep[0] = new Plane(0.0, 1.0, 0.0, 0.0, &(scene.material[2]));  // Horizontal plane.
+  scene.surfacep[1] = new Plane(1.0, 0.0, 0.0, 0.0, &(scene.material[4]));  // Left vertical plane.
+  scene.surfacep[2] = new Plane(0.0, 0.0, 1.0, 0.0, &(scene.material[4]));  // Right vertical plane.
+
+  // Constants related to cube and sphere on top of cube
+  const double C_SPHERE_X = 60.0;
+  const double C_SPHERE_Z = 30.0;
+  const double C_HEIGHT = 15.0;
+  const double C_RADIUS = 10.0;
+
+  const double C_START_X = 0.5 * C_SPHERE_X;
+  const double C_START_Z = C_SPHERE_Z - 1.5 * C_RADIUS;
+  const double C_END_X = 1.5 * C_SPHERE_X;
+  const double C_END_Z = C_SPHERE_Z + 1.5 * C_RADIUS;
+
+  // Sphere on top of cube
+  scene.surfacep[3] = new Sphere(Vector3d(C_SPHERE_X, C_HEIGHT + C_RADIUS, C_SPHERE_Z), C_RADIUS, &(scene.material[0]));
+
+  // Vertices defining a cube
+  Vector3d C_A = Vector3d(C_START_X, C_HEIGHT, C_END_Z);
+  Vector3d C_B = Vector3d(C_START_X, C_HEIGHT, C_START_Z);
+  Vector3d C_C = Vector3d(C_END_X, C_HEIGHT, C_START_Z);
+  Vector3d C_D = Vector3d(C_END_X, C_HEIGHT, C_END_Z);
+  Vector3d C_E = Vector3d(C_END_X, 0.0, C_START_Z);
+  Vector3d C_F = Vector3d(C_END_X, 0.0, C_END_Z);
+  Vector3d C_G = Vector3d(C_START_X, 0.0, C_END_Z);
+  Vector3d C_H = Vector3d(C_START_X, 0.0, C_START_Z);
+
+  // Cube +y face.
+  scene.surfacep[4] = new Triangle(C_D, C_B, C_A, &(scene.material[3]));
+  scene.surfacep[5] = new Triangle(C_D, C_C, C_B, &(scene.material[3]));
+
+  // Cube +x face.
+  scene.surfacep[6] = new Triangle(C_F, C_C, C_D, &(scene.material[3]));
+  scene.surfacep[7] = new Triangle(C_F, C_E, C_C, &(scene.material[3]));
+
+  // Cube -x face
+  scene.surfacep[8] = new Triangle(C_A, C_H, C_G, &(scene.material[3]));
+  scene.surfacep[9] = new Triangle(C_A, C_B, C_H, &(scene.material[3]));
+
+  // Cube +z face
+  scene.surfacep[10] = new Triangle(C_G, C_D, C_A, &(scene.material[3]));
+  scene.surfacep[11] = new Triangle(C_G, C_F, C_D, &(scene.material[3]));
+
+  // Cube -z face
+  scene.surfacep[12] = new Triangle(C_B, C_C, C_E, &(scene.material[3]));
+  scene.surfacep[13] = new Triangle(C_B, C_E, C_H, &(scene.material[3]));
+
+  const double P_HEIGHT = 50.0;
+  const double P_WIDTH = 25.0;
+
+  const double P_START_X = C_SPHERE_X - 0.5 * P_WIDTH;
+  const double P_START_Z = C_END_Z + 40.0;
+  const double P_END_X = P_START_X + P_WIDTH;
+  const double P_END_Z = P_START_Z + P_WIDTH;
+
+  const double P_MIDDLE_X = P_START_X + 0.5 * P_WIDTH;
+  const double P_MIDDLE_Z = P_START_Z + 0.5 * P_WIDTH;
+
+  // Vertices defining pyramid
+  Vector3d P_A = Vector3d(P_START_X, 0.0, P_START_Z);
+  Vector3d P_B = Vector3d(P_START_X, 0.0, P_END_Z);
+  Vector3d P_C = Vector3d(P_END_X, 0.0, P_END_Z);
+  Vector3d P_D = Vector3d(P_END_X, 0.0, P_START_Z);
+  Vector3d P_E = Vector3d(P_MIDDLE_X, P_HEIGHT, P_MIDDLE_Z);
+
+  // Pyramid +x
+  scene.surfacep[14] = new Triangle(P_D, P_E, P_C, &(scene.material[1]));
+  // Pyramid -x
+  scene.surfacep[15] = new Triangle(P_A, P_B, P_E, &(scene.material[1]));
+  // Pyramid +z
+  scene.surfacep[16] = new Triangle(P_C, P_E, P_B, &(scene.material[1]));
+  // Pyramid -z
+  scene.surfacep[17] = new Triangle(P_A, P_D, P_E, &(scene.material[1]));
+
+  // Sphere on top of pyramid
+  const double P_RADIUS = 0.8 * C_RADIUS;
+  scene.surfacep[18] = new Sphere(Vector3d(P_MIDDLE_X, P_HEIGHT + P_RADIUS - 10.0, P_MIDDLE_Z), P_RADIUS, &(scene.material[1]));
+
+  // Define camera.
+  scene.camera = Camera(Vector3d(200.0, 50.0, 140.0),       // Eye
+                        Vector3d(45.0, 22.0, 55.0),         // LookAt
+                        Vector3d(0.0, 1.0, 0.0),            // Up vector
+                        (-1.0 * imageWidth) / imageHeight,  // Left
+                        (1.0 * imageWidth) / imageHeight,   // Right
+                        -1.0, 1.0,                          // Bottom / Top
+                        3.0,                                // Near
+                        imageWidth, imageHeight);
 }

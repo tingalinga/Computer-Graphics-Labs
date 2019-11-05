@@ -5,7 +5,7 @@ INCLUDE = -I./include/
 
 all:
 	make main
-	make run && imgcat ./out2.png
+	make run
 
 main: main.cpp image_io.o utilself.o camera.o image.o plane.o raytrace.o sphere.o triangle.o raytrace.o
 	$(CC) $(CFLAGS) $(FRAMEWORKS) -o main main.cpp utilself.o image_io.o camera.o image.o plane.o sphere.o triangle.o raytrace.o
