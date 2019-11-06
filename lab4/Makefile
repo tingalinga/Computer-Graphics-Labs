@@ -1,40 +1,24 @@
+# For compiling
 CC = g++
 CFLAGS = -Wall -Wextra -Winline -Wno-deprecated -Og
 INCLUDE = -I./include/
+OBJS = ImageIO.o Camera.o Image.o Plane.o Sphere.o Triangle.o Util.o Raytrace.o
+
+# For making zip file
 MATRIC_NO = A0207552J
+DIR = lab4
+FILES_TO_ZIP = Main.cpp Raytrace.cpp Sphere.cpp img_r0.png \
+				img_r0s.png img_r1.png img_r1s.png img_r2.png \
+				img_r2s.png img_scene2.png img_spheres.png
 
-all:
-	make main
-	make run
+all: main run
+.PHONY: all
 
-main: Main.cpp image_io.o util.o camera.o image.o plane.o raytrace.o \
-		sphere.o triangle.o raytrace.o
-	$(CC) $(CFLAGS) -o main Main.cpp util.o image_io.o \
-			camera.o image.o plane.o sphere.o triangle.o raytrace.o
+main: Main.cpp $(OBJS)
+	$(CC) $(CFLAGS) -o main Main.cpp $(OBJS)
 
-image_io.o: ImageIO.cpp
-	$(CC) $(CFLAGS) $(INCLUDE) -o image_io.o -c ImageIO.cpp
-
-camera.o: Camera.cpp Camera.h Vector3d.h
-	$(CC) $(CFLAGS) -o camera.o -c Camera.cpp
-
-image.o: Image.cpp Image.h ImageIO.h ImageIO.cpp
-	$(CC) $(CFLAGS) -o image.o -c Image.cpp
-
-plane.o: Plane.cpp Plane.h Surface.h
-	$(CC) $(CFLAGS) -o plane.o -c Plane.cpp
-
-sphere.o: Sphere.cpp
-	$(CC) $(CFLAGS) -o sphere.o -c Sphere.cpp
-
-triangle.o: Triangle.cpp Triangle.h
-	$(CC) $(CFLAGS) -o triangle.o -c Triangle.cpp
-
-util.o: Util.cpp Util.h
-	$(CC) $(CFLAGS) -o util.o -c Util.cpp
-
-raytrace.o: Raytrace.cpp Raytrace.h
-	$(CC) $(CFLAGS) -o raytrace.o -c Raytrace.cpp
+$(OBJS): %.o: %.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
 run:
 	./main
@@ -42,15 +26,10 @@ run:
 clean:
 	rm -f *.o main ../$(MATRIC_NO)_lab4.zip
 
-# Also remove images
+# Also remove images. Use with caution
 clean-hard:
-	make clean
+	@make clean
 	rm -f *.png
 
-# Zips Main.cpp, Raytrace.cpp and Sphere.cpp as well as all images generated
-zip: Main.cpp Raytrace.cpp Sphere.cpp img_r0.png img_r0s.png img_r1.png \
-    	img_r1s.png img_r2.png img_r2s.png img_scene2.png img_spheres.png
-	cd .. && zip $(MATRIC_NO)_lab4.zip lab4/Main.cpp lab4/Raytrace.cpp \
-				lab4/Sphere.cpp lab4/img_r0.png lab4/img_r0s.png \
-				lab4/img_r1.png lab4/img_r1s.png lab4/img_r2.png \
-				lab4/img_r2s.png lab4/img_scene2.png lab4/img_spheres.png
+zip: $(FILES_TO_ZIP)
+	cd .. && zip $(MATRIC_NO)_lab4.zip $(foreach file,$(FILES_TO_ZIP),$(DIR)/$(file))
