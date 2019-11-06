@@ -22,6 +22,6 @@ The raytracer supports an arbitrary number of reflective levels and shadows. Whe
 ![pics](https://i.imgur.com/TLnGRmr.jpg)
 
 
-As well as the file `img_scene2` that looks like the following:
+As well as the file `img_scene2.png` that looks like the following:
 
 ![scene2](https://i.imgur.com/W18D9g6.png)
