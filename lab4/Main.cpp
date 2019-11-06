@@ -97,7 +97,7 @@ int main() {
   Scene scene1;
   DefineScene1(scene1, imageWidth1, imageHeight1);
 
-  // Render Scene 1.
+  // Render Scene 1 images.
   for (int r = 0; r <= 2; r++) {    // reflectLevels [0, 1, 2]
     for (int h = 0; h <= 1; h++) {  // hasShadow [0, 1] = [false, true]
       // Construct output filename

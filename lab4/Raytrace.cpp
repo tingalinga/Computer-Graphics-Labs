@@ -56,6 +56,7 @@ static Color computePhongLighting(const Vector3d &L, const Vector3d &N, const Ve
 // Returns the index that contains the biggest absolute value in a direction vector
 // This is to minimize floating point error for the shadow caster
 // I.e [-20.0, 0.0000001, -3.1] -> 0
+//     [0.000234, -0.0041, 0.5] -> 2
 int getMaxIdx(Vector3d dir) {
   double maxIdx, dirAbsMax = -1;
   for (int i = 0; i <= 2; i++) {
@@ -109,7 +110,7 @@ Color Raytrace::TraceRay(const Ray &ray, const Scene &scene,
   //*********** WRITE YOUR CODE HERE **************
   //***********************************************
   for (int i = 0; i < scene.numPtLights; i++) {
-    // Make unit vector L pointing from position p to light point
+    // Make unit vector L pointing from hit position p to light point
     Vector3d L = scene.ptLight[i].position - nearestHitRec.p;
     L.makeUnitVector();
 
@@ -120,7 +121,7 @@ Color Raytrace::TraceRay(const Ray &ray, const Scene &scene,
 
       // Calculate the maximum t-value using the fact that:
       // lRay.origin() + tmax * lRay.direction() = scene.ptLight[i].position
-      // We can in principle do this for any single direction, but choose the
+      // We can in principle do this for any single xyz-axis, but choose the
       // one with the biggest absolute value as to minimize floating point error
       Vector3d dir = lRay.direction();
       double maxIdx = getMaxIdx(dir);
@@ -135,8 +136,8 @@ Color Raytrace::TraceRay(const Ray &ray, const Scene &scene,
       }
     }
 
-    // Only opaque surfaces, so it is simply a binary choice of there being phong
-    // lightning or not
+    // If we didn't set lightReached to false in previous for-loop, meaning
+    // our light ray didn't hit any object inbetween, then add lighting
     if (lightReached)
       result += computePhongLighting(L, N, V, *nearestHitRec.mat_ptr, scene.ptLight[i]);
   }
@@ -151,6 +152,9 @@ Color Raytrace::TraceRay(const Ray &ray, const Scene &scene,
   //***********************************************
   //*********** WRITE YOUR CODE HERE **************
   //***********************************************
+
+  // Construct a ray starting at where we hitted some material and let it's
+  // direction be pointing towards the mirrored direction.
   if (reflectLevels > 0) {
     Vector3d R = mirrorReflect(V, N);
     Ray rRay = Ray(nearestHitRec.p, R);
