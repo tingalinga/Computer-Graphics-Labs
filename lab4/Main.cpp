@@ -2,12 +2,10 @@
 // STUDENT NAME: Soeren Hougaard Mulvad
 // STUDENT NO.: A0207552J
 // NUS EMAIL ADDRESS: e0445646@u.nus.edu
-// COMMENTS TO GRADER: This program has been developed and tested on macOS
-// and compiled with:
-// g++ -I./include/ -Wno-deprecated -c image_io.cpp
-// g++ -lGLEW -framework GLUT -framework OpenGL -Wno-deprecated -o main main.cpp image_io.o
-// There may therefore be problems with library functions, although
-// I believe there shouldn't.
+// COMMENTS TO GRADER: I have changed the program so it just
+// renders all the different neseccary images with the correct
+// filename instead of having to run it again every time, changing
+// constants and output filename
 // ============================================================
 
 #include <cmath>
@@ -34,15 +32,16 @@ using namespace std;
 static const int imageHeight1 = 480;
 static const int imageWidth1 = 640;
 
-// TODO: Maybe comment these in again
-// static const int reflectLevels1 = 2;  // 0 -- object does not reflect scene.
+// NB: Commented these out because they weren't needed anymore when making
+// all the different scenes
+// static const int reflectLevels1 = 2;
 // static const int hasShadow1 = true;
 // static const char outImageFile1[] = "out1.png";
 
 // Constants for Scene 2.
 static const int imageWidth2 = 640;
 static const int imageHeight2 = 480;
-static const int reflectLevels2 = 2;  // 0 -- object does not reflect scene.
+static const int reflectLevels2 = 2;
 static const int hasShadow2 = true;
 static const char outImageFile2[] = "img_scene2.png";
 
@@ -92,35 +91,27 @@ void WaitForEnterKeyBeforeExit(void) {
 }
 
 int main() {
-  // TODO: Comment this in again
-  // atexit(WaitForEnterKeyBeforeExit);
+  atexit(WaitForEnterKeyBeforeExit);
 
   // Define Scene 1.
-  if (false) {  // TODO: Comment this in again
-    Scene scene1;
-    DefineScene1(scene1, imageWidth1, imageHeight1);
+  Scene scene1;
+  DefineScene1(scene1, imageWidth1, imageHeight1);
 
-    // Render Scene 1.
-    for (int r = 0; r <= 2; r++) {    // reflectLevels [0, 1, 2]
-      for (int h = 0; h <= 1; h++) {  // hasShadow [0, 1] = [false, true]
-        // Construct output filename
-        string outputFile = "img_r" + to_string(r) + (h ? "s" : "") + ".png";
-        // Make C++ string to a char[]
-        char charArr[outputFile.length() + 1];
-        strcpy(charArr, outputFile.c_str());
+  // Render Scene 1.
+  for (int r = 0; r <= 2; r++) {    // reflectLevels [0, 1, 2]
+    for (int h = 0; h <= 1; h++) {  // hasShadow [0, 1] = [false, true]
+      // Construct output filename
+      string outputFile = "img_r" + to_string(r) + (h ? "s" : "") + ".png";
+      // Make C++ string to a char[]
+      char charArr[outputFile.length() + 1];
+      strcpy(charArr, outputFile.c_str());
 
-        printf("Render Scene 1 with %i reflection levels and %sshadows...\n",
-               r, h ? "" : "no ");
-        RenderImage(charArr, scene1, r, h);
-        printf("Image completed.\n\n");
-      }
+      printf("Render Scene 1 with %i reflection levels and hasShadow = %s...\n",
+             r, h ? "true" : "false");
+      RenderImage(charArr, scene1, r, h);
+      printf("Image completed.\n\n");
     }
   }
-
-  // TODO: Maybe remove this.
-  // printf("Render Scene 1...\n");
-  // RenderImage(outImageFile1, scene1, reflectLevels1, hasShadow1);
-  // printf("Image completed.\n");
 
   // Define Scene 2.
   Scene scene2;
@@ -241,7 +232,7 @@ void DefineScene2(Scene &scene, int imageWidth, int imageHeight) {
   //***********************************************
   //*********** WRITE YOUR CODE HERE **************
   //***********************************************
-  scene.backgroundColor = Color(0.0f, 0.0f, 1.0f);
+  scene.backgroundColor = Color(0.0f, 0.0f, 0.0f);
 
   scene.amLight.I_a = Color(1.0f, 1.0f, 1.0f) * 0.25f;
 
@@ -257,10 +248,10 @@ void DefineScene2(Scene &scene, int imageWidth, int imageHeight) {
   scene.material[0].n = 30.0f;
 
   // Dark green
-  scene.material[1].k_d = Color(0.3f, 1.0f, 0.3f);
+  scene.material[1].k_d = Color(0.3f, 0.9f, 0.3f);
   scene.material[1].k_a = scene.material[1].k_d;
   scene.material[1].k_r = Color(0.2f, 0.4f, 0.2f);
-  scene.material[1].k_rg = Color(0.8f, 0.8f, 0.8f) / 4.0f;
+  scene.material[1].k_rg = Color(0.8f, 0.8f, 0.8f) / 3.0f;
   scene.material[1].n = 30.0f;
 
   // Light blue.
@@ -295,7 +286,7 @@ void DefineScene2(Scene &scene, int imageWidth, int imageHeight) {
   scene.ptLight[1].position = Vector3d(5.0, 80.0, 60.0);
 
   // Define surface primitives.
-  scene.numSurfaces = 19;
+  scene.numSurfaces = 20;
   scene.surfacep = new SurfacePtr[scene.numSurfaces];
 
   scene.surfacep[0] = new Plane(0.0, 1.0, 0.0, 0.0, &(scene.material[2]));  // Horizontal plane.
@@ -317,6 +308,7 @@ void DefineScene2(Scene &scene, int imageWidth, int imageHeight) {
   scene.surfacep[3] = new Sphere(Vector3d(C_SPHERE_X, C_HEIGHT + C_RADIUS, C_SPHERE_Z), C_RADIUS, &(scene.material[0]));
 
   // Vertices defining a cube
+  // See https://i.imgur.com/n5yyY4N.png
   Vector3d C_A = Vector3d(C_START_X, C_HEIGHT, C_END_Z);
   Vector3d C_B = Vector3d(C_START_X, C_HEIGHT, C_START_Z);
   Vector3d C_C = Vector3d(C_END_X, C_HEIGHT, C_START_Z);
@@ -358,6 +350,7 @@ void DefineScene2(Scene &scene, int imageWidth, int imageHeight) {
   const double P_MIDDLE_Z = P_START_Z + 0.5 * P_WIDTH;
 
   // Vertices defining pyramid
+  // See https://i.imgur.com/G4Mbd3R.png
   Vector3d P_A = Vector3d(P_START_X, 0.0, P_START_Z);
   Vector3d P_B = Vector3d(P_START_X, 0.0, P_END_Z);
   Vector3d P_C = Vector3d(P_END_X, 0.0, P_END_Z);
@@ -376,6 +369,9 @@ void DefineScene2(Scene &scene, int imageWidth, int imageHeight) {
   // Sphere on top of pyramid
   const double P_RADIUS = 0.8 * C_RADIUS;
   scene.surfacep[18] = new Sphere(Vector3d(P_MIDDLE_X, P_HEIGHT + P_RADIUS - 10.0, P_MIDDLE_Z), P_RADIUS, &(scene.material[1]));
+
+  // Sphere in the z-middle between the two objects far out in the x-direction
+  scene.surfacep[19] = new Sphere(Vector3d(P_END_X + 65.0, P_RADIUS, C_END_Z + 20.0), C_RADIUS, &(scene.material[0]));
 
   // Define camera.
   scene.camera = Camera(Vector3d(200.0, 50.0, 140.0),       // Eye
