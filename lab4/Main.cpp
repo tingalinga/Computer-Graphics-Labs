@@ -21,6 +21,7 @@
 #include "Raytrace.h"
 #include "Scene.h"
 #include "Sphere.h"
+#include "Square.h"
 #include "Surface.h"
 #include "Triangle.h"
 #include "Util.h"

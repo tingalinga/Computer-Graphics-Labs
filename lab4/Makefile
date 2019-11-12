@@ -2,7 +2,7 @@
 CC = g++
 CFLAGS = -Wall -Wextra -Winline -Wno-deprecated -Og
 INCLUDE = -I./include/
-OBJS = ImageIO.o Camera.o Image.o Plane.o Sphere.o Triangle.o Util.o Raytrace.o
+OBJS = ImageIO.o Camera.o Image.o Plane.o Sphere.o Triangle.o Square.o Util.o Raytrace.o
 
 # For making zip file
 MATRIC_NO = A0207552J
