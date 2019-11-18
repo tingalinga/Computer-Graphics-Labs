@@ -1,19 +1,6 @@
 ## Lab 4
 
-The purpose of this lab was to implement the Whitted Ray Tracing algorithm on some skeleton code and define an additional scene with it. For now, the raytracer works with the simple shapes of planes, spheres and triangles (from which a number of other shapes can be made with varying difficulti).
-
-### Compiling and running the program
-To compile, run
-
-```
-$ make main
-```
-
-To run the program and render the images, run
-
-```
-$ make run
-```
+The purpose of this lab was to implement the Whitted Ray Tracing algorithm on some skeleton code and define an additional scene with it. For now, the raytracer works with the simple shapes of planes, spheres and triangles (from which a number of other shapes can be made with varying difficulty).
 
 ### Images generated
 

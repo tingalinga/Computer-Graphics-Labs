@@ -4,7 +4,8 @@ The purpose of this lab is to draw a room with a table in it. The top of the tab
 
 Furthermore, a very simple flying bird has been added to the drawing.
 
-
 A preview of the program can be seen here:
 
 ![Lab3](https://media.giphy.com/media/XHwAh9OElcvQ5tx2N9/giphy.gif)
+
+**NB:** This code uses GLEW, so you might need to run `brew install glew` before being able to compile and run this code.

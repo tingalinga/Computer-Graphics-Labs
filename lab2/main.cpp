@@ -249,6 +249,11 @@ void MyDisplay(void) {
   double zEye = eyeDistance * cosDeg(eyeLatitude) * cosDeg(eyeLongitude);
   gluLookAt(xEye, yEye, zEye, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
+  // Another possible method to accomplish the same would have been:
+  // gluLookAt(0.0, 0.0, eyeDistance, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  // glRotated(eyeLatitude, 1.0, 0.0, 0.0);
+  // glRotated(-eyeLongitude, 0.0, 1.0, 0.0);
+
   // Set world positions of the two lights.
   glLightfv(GL_LIGHT0, GL_POSITION, light0Position);
   glLightfv(GL_LIGHT1, GL_POSITION, light1Position);
